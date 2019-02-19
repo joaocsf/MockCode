@@ -1,0 +1,68 @@
+/**
+ * Settings
+ */
+@import "settings/settings.index";
+
+/**
+ * Tools
+ */
+@import "tools/tools.index";
+
+/**
+ * Utilities
+ */
+@import "utilities/utilities.index";
+
+/**
+ * Components
+ */
+@import "components/components.index";
+
+/**
+ * Objects
+ */
+@import "objects/objects.index";
+
+/**
+ * Trumps
+ */
+@import "trumps/trumps.index";
+
+canvas{
+  border: 1px solid #DDD;
+  box-shadow: -7px 14px 51px -28px rgba(0,0,0,0.75);
+}
+
+h1{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0em;
+  color: #1976D2;
+  font-size: 4em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+}
+
+.flex-parent{
+  display: flex;
+  width: auto;
+  margin: auto;
+  justify-content: center;
+}
+ 
+button{
+  height: 60px;
+  background-color: white;
+  font-size: 1em;
+  width: 10em;
+  border: 20px, solid;
+  border-radius: 20cm;
+  margin: 2em;
+  color: #1976D2;
+  font-weight: bolder;
+  border-width: 0.5em;
+  border-color: #1976D2;
+}
+
+.save{
+  color: #689F38;
+  border-color: #689F38;
+}
