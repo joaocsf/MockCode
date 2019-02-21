@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", startup)
 
 var width = 800
@@ -11,6 +12,13 @@ var drawBox = false
 var boxOffset = 5
 var gridSize = 100
 var gridSpacing = 20
+var currentGridSize = 100
+var currentGridSpacing = 100
+var context = undefined
+var lastObjs = []
+
+var caus = [0.2,0.4]
+var currentCaus
 
 class Drawable {
   constructor(x,y, w, h){
@@ -46,13 +54,13 @@ class Drawable {
   drawBox(rc){
     var dims = this.getBoxDims()
     var color = this.color || 'green'
-    rc.rectangle(dims[0], dims[1],dims[2],dims[3],{stroke:color, roughness:0})
+    rc.rectangle(dims[0], dims[1],dims[2],dims[3],{stroke:color, roughness:0, strokeWidth:5})
   }
 
   onDraw(rc){
     for(var i in this.lines){
       var l = this.lines[i]
-      strange_line(l[0], l[1], 0.3)
+      strange_line(l[0], l[1], currentCaus)
     }
   }
 
@@ -71,11 +79,36 @@ class Drawable {
   }
 }
 
+class Container extends Drawable
+{
+  generate()
+  {
+    this.color = 'black'
+    var points = rectPoints(this.x, this.y, this.w, this.h)
+
+    this.lines = []
+    if(randomize)
+      mutate(points, 0.1)
+
+    this.lines.push(
+      [points[0], points[1]],
+      [points[1], points[2]],
+      [points[2], points[3]],
+      [points[3], points[0]],
+    )
+    this.update_min_max(points)
+  }
+
+  drawBox(){
+
+  }
+}
+
 class Checkbox extends Drawable
 {
   generate()
   {
-    this.color = 'cyan'
+    this.color = '#006064'
     var min = Math.min(this.w, this.h)
     this.w = Math.random()*0.5+0.5
     this.h = Math.random()*0.5+0.5
@@ -115,7 +148,7 @@ class Checkbox extends Drawable
       top[0] += this.w*random(-0.5,0.5)
       top[1] += this.h*random(-0.5,0.3)
       var pts = [left, mid, top]
-      mutate(pts, 0.2)
+      mutate(pts, 0.1)
       this.lines.push(
         [pts[0], pts[1]],
         [pts[1], pts[2]]
@@ -123,17 +156,24 @@ class Checkbox extends Drawable
     }
  
   }
+
+  onDraw(rc){
+    for(var i in this.lines){
+      var l = this.lines[i]
+      strange_line(l[0], l[1], random(0.0,0.2))
+    }
+  }
 }
 
 class Button extends Drawable
 {
   generate() 
   {
-    this.color = 'crimson'
+    this.color = '#6D4C41'
     var points = rectPoints(this.x, this.y, this.w, this.h)
     this.lines = []
     if(randomize)
-      mutate(points)
+      mutate(points,0.5)
 
     this.lines.push(
       [points[0], points[1]],
@@ -145,8 +185,8 @@ class Button extends Drawable
       set_min_max(this.min, this.max, points[p])
     }
     points = []
-    var nPoints = this.w/100
-    nPoints *= Math.random()+2
+    var nPoints = this.w/50
+    nPoints *= Math.random()/2+2
     nPoints = Math.floor(nPoints)
     var size = 1/nPoints
     var hOffset = 0.2
@@ -160,11 +200,11 @@ class Button extends Drawable
       var rand = [-0.1, -0.1]
       if(i == 0){
         rand[0] =0
-        rand[1] =1
+        rand[1] =2
       }
       
       if(i == nPoints-1){
-        rand[0] =-1
+        rand[0] =-2
         rand[1] =0
       }
       
@@ -196,7 +236,7 @@ class RadioButton extends Drawable
 {
   generate()
   {
-    this.color = 'blue'
+    this.color = '#1565C0'
     var min = Math.min(this.w, this.h)
     this.w = Math.random()*0.5+0.5
     this.h = Math.random()*0.5+0.5
@@ -219,12 +259,13 @@ class TextBlock extends Drawable
 {
   generate()
   {
-    this.color = 'purple'
+    this.color = '#6A1B9A'
     this.lines = []
     var points = []
     var nPoints = this.w/50
     nPoints *= Math.random()+2   
     var size = 1/nPoints
+    size/=2
     var direction = Math.random() > 0.5
     var hOffset = 0.5 
     if(Math.random() > 0.5)
@@ -233,7 +274,22 @@ class TextBlock extends Drawable
 
     for(var i = 0; i < nPoints; i++){
       var pt = [0,0]
-      pt[0] = this.w * ((i/(nPoints-1)) + size * random(-0.5,0.5) )
+
+      var rand = [-0.1, -0.1]
+      if(i == 0){
+        rand[0] =0
+        rand[1] =1
+      }
+      
+      if(i == nPoints-1){
+        rand[0] =-1
+        rand[1] =0
+      }
+
+      var frac = ((i/(nPoints-1)))
+      var offsetX = size * random(rand[0],rand[1])
+      pt[0] = this.w * (frac + offsetX)
+
       pt[1] = this.h * (direction ? random(0.5,0.5+hOffset) : random(0.5-hOffset,0.5))
       pt[0] += this.x
       pt[1] += this.y
@@ -267,20 +323,20 @@ class Dropdown extends Drawable
 {
   generate() 
   {
-    this.color = 'green'
+    this.color = '#558B2F'
     this.rnd = () => {
       return Math.random()*0.1 + 0.8
     }
     this.lines = []
     var points = rectPoints(this.x, this.y, this.w, this.h)
     if(randomize)
-      mutate(points)
+      mutate(points,0.5)
     
     var m1 = p_lerp(points[0], points[1], this.rnd())
     var m2 = p_lerp(points[3], points[2], this.rnd())
     var mid_line = [m1, m2]
     if(mutate)
-      mutate(mid_line, 0.5)
+      mutate(mid_line, 0.2)
 
     this.lines.push(
       [points[0], points[1]],
@@ -298,12 +354,12 @@ class Textfield extends Drawable
 {
   generate()
   {
-    this.color ='yellow'
+    this.color ='#EF6C00'
     this.lines = []
     var points = rectPoints(this.x, this.y, this.w, this.h)
 
     if(randomize)
-      mutate(points)
+      mutate(points,0.6)
 
     this.lines.push(
       [points[0], points[1]],
@@ -326,7 +382,7 @@ class Picture extends Drawable
 {
   generate()
   {
-    this.color = 'red'
+    this.color = '#D50000'
     this.lines = []
     var points = rectPoints(this.x, this.y, this.w, this.h)
 
@@ -335,10 +391,10 @@ class Picture extends Drawable
 
     var cross = []
     cross.push(
-      points[0].slice(),
-      points[2].slice(),
-      points[3].slice(),
-      points[1].slice(),
+      p_lerp(points[0],points[2], random(0.0, 0.3)),
+      p_lerp(points[2],points[0], random(0.0, 0.3)),
+      p_lerp(points[1],points[3], random(0.0, 0.3)),
+      p_lerp(points[3],points[1], random(0.0, 0.3))
       )
 
     if(randomize)
@@ -368,6 +424,11 @@ function random(min, max)
   return Math.random()*diff + min
 }
 
+function clamp(v, min, max)
+{
+  return v < min? min : v > max? max : v
+}
+
 function p_mult(a,v){
   a[0] *= v
   a[1] *= v
@@ -388,7 +449,8 @@ function p_lerp(a,b,t){
 
 function strange_line(a,b, weight){
   var qrt = p_lerp(a,b,0.25)
-  var qrt_2 = p_lerp(a,b,0.45)
+  var mid = p_lerp(a,b,0.5)
+  var qrt_2 = p_lerp(a,b,0.75)
   var pts = [qrt, 
     qrt_2]
   mutate(pts, weight)
@@ -444,17 +506,31 @@ function picture(x,y,w,h){
   line(ps[1],ps[3])
 }
 
+//################
+//# Initialize ###
+//################
+
 function startup(){
   var canvas = document.getElementsByClassName('canvas')[0]
   canvas.width=width
   canvas.height=height
-  const context = canvas.getContext('2d');
+  context = canvas.getContext('2d');
   rc = rough.canvas(canvas)
   var offset = 10
   randomizeStyle()
-  $('.generate').click(()=> {
-    context.clearRect(0,0, canvas.width, canvas.height)
+
+  $('.Debug').click(function(){
+    drawBox = $('.Debug').prop('checked') 
+    clear()
+    redraw()
+  })
+
+  $('.generate').click(function (){
+    drawBox = $('.Debug').prop('checked') 
+    clear()
+    randomizeStyle()
     drawGrid([width, height], rc)
+
   })
 
   drawGrid([width, height], rc)
@@ -465,12 +541,12 @@ function startup(){
 function randomElement(){
   var elems = [
     {name: 'Picture'    , expand: 'a', split: 'n' },
-    {name: 'Dropdown'   , expand: 'h', split: 'v' },
-    {name: 'RadioButton', expand: 'v', split: 'v' },
-    {name: 'Textfield'  , expand: 'h', split: 'v' },
-    {name: 'Checkbox'   , expand: 'v', split: 'v' },
-    {name: 'TextBlock'  , expand: 'a', split: 'v' },
-    {name: 'Button'     , expand: 'a', split: 'v' },
+    {name: 'Dropdown'   , expand: 'h', split: 'v', targetH: random(40,50)},
+    {name: 'RadioButton', expand: 'v', split: 'v', targetH: random(40,45), addText: true},
+    {name: 'Textfield'  , expand: 'h', split: 'v', targetH: random(40,50)},
+    {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: random(40,50), addText: true},
+    {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: random(20,40)},
+    {name: 'Button'     , expand: 'a', split: 'v', targetH: random(50,60)},
   ]
   var index = Math.floor(Number(random(0, elems.length)))
   return elems[index]
@@ -496,6 +572,8 @@ function createObj(obj, x,y,w,h){
       return new Button(x,y,w,h)
     case 'Debug':
       return new Debug(x,y,w,h)
+    case 'Container':
+      return new Container(x,y,w,h)
     default:
       console.error(obj)
       break;
@@ -506,38 +584,146 @@ function addObject(object, objs){
   var splitV = object.split === 'v'
 
   if(splitV){
-    var hSize = random(0.4,0.5)
-    var offset = random(0.001,0.1)
-    var occurrences = Math.floor(object.h/(hSize+offset))
+    var availabelHeight = object.h*currentGridSize
+    var targetHeight = object.targetH
+    
+    
+    var hSize = targetHeight / availabelHeight
+    var hLeftOver = (availabelHeight% targetHeight)/2
+    var offset = random(10,15)
+    var hOffset = offset/availabelHeight
+    var occurrences = Math.floor(availabelHeight/(targetHeight+offset))
+    var startH = hLeftOver/availabelHeight *object.h
+
+    var debug = {
+      type: object.name,
+      a_height: availabelHeight,
+      t_height: targetHeight,
+      hSize: hSize,
+      hOffset: hOffset,
+      occur: occurrences,
+    }
+    
+    var addText = object.addText === true
+
     var copy = JSON.stringify(object)
 
     for(var i = 0; i < occurrences; i++){
       var newObj = JSON.parse(copy)
-      newObj.y += offset*i + hSize*i
-      //newObj.y
-      newObj.h = hSize
+      newObj.y += startH + hOffset*object.h*i + hSize*object.h*i
+      newObj.h = hSize*object.h
       objs.push(newObj)
+      
+      if(addText){
+        var x = newObj.x + newObj.h *0.7
+        var y = newObj.y
+        var w = object.w - newObj.h*1.1
+        var h = newObj.h
+        objs.push(
+          createObjHandler('TextBlock', x,y,w,h)
+        )
+      }
+
     }
   }else
     objs.push(object)
 }
 
-function decorateGrid(gridSize){
+function createObjHandler(object, x,y,w,h){
+  return {
+    name:object,
+    x:x,
+    y:y,
+    w:w,
+    h:h
+  }
+}
+
+function createDebugObj(x,y,w,h){
+  return createObjHandler('Debug', x,y,w,h)
+}
+
+function populateGrid(gridSize){
+  var grid = 1
   var gridCells = []
-  var objs = []
+  var debugObjs = []
   for(var j = 0; j < gridSize[1]; j++){
     for(var i = 0; i < gridSize[0]; i++){
-      if(gridCells[i+'x'+j] === true)
+      grid+=1
+      var cell = gridCells[i+'x'+j]
+      
+      if(cell !== undefined && cell.grid > 0)
         continue
+      var expandH = Math.random() > 0.5
+      var expandV = Math.random() > 0.5
+    
+      
+      var expandHSize = expandH ?  Math.random()* (gridSize[0] - i - 1) : 0
+      var expandVSize = expandV ?  Math.random()* (gridSize[1] - j - 1) : 0
+
+      if(expandHSize+expandVSize < 2)
+        expandHSize = expandVSize = 0
+
+      var max = [i,j]
+      
+      var stop = false
+      
+
+      for(var y = 0; y <= expandVSize; y++){
+        if(stop) break
+        for(var x = 0; x <= expandHSize; x++){
+          
+          var xi = x+i
+          var yj = y+j
+          
+          var near = gridCells[xi+'x'+yj]
+
+          if(near !== undefined && near.grid > 0){
+            max = [xi-1, yj]
+            stop=true
+            break
+          }else
+            gridCells[xi+'x'+yj] = {used: false, grid:grid}
+
+          max[0] = Math.max(xi, max[0])
+          max[1] = Math.max(yj, max[1])
+        }
+      }
+
+      if(max[1] == j && max[0] == i){
+        gridCells[i+'x'+j] = {used: false, grid:0}
+        continue
+      }
+      var obj = createObjHandler('Container',i,j,max[0]-i+1, max[1]-j+1)
+      debugObjs.push(obj)
+    }
+  }
+  return [gridCells, debugObjs]
+}
+
+
+function decorateGrid(gridSize){
+  var result = populateGrid(gridSize)
+  var gridCells = result[0]
+  var objs = result[1]
+  for(var j = 0; j < gridSize[1]; j++){
+    for(var i = 0; i < gridSize[0]; i++){
+      var cell = gridCells[i+'x'+j]
+
+      if(cell.used === true){
+        continue
+      }
+      
+      var grid = cell.grid
 
       var element = randomElement()
 
-      gridCells[i+'x'+j] = true
+      cell.used = true
       var expand = element.expand
       var expandH = expand === 'a' || expand === 'h'
       var expandV = expand === 'a' || expand === 'v'
       
-      expandH = Math.random() > 0.5 ? false : expandH
+      expandH = Math.random() > 0.2 ? false : expandH
       expandV = Math.random() > 0.5 ? false : expandV
       
       var expandHSize = expandH ?  Math.random()* (gridSize[0] - i - 1) : 0
@@ -556,21 +742,22 @@ function decorateGrid(gridSize){
           var xi = x+i
           var yj = y+j
           
-          if(gridCells[xi+'x'+yj] == true){
-            var debug = {
-                name:'Debug', 
-                x: xi, 
-                y: yj, 
-                w: 1,
-                h: 1
-              }
+          var near = gridCells[xi+'x'+yj]
+          if(near.used == true || near.grid != grid){
+            max[0] = clamp(xi-1, i, gridSize[0])
+            max[1] = clamp(yj-1, j, gridSize[1])
             stop=true
             break
           }else
-            gridCells[xi+'x'+yj] = true
 
           max[0] = Math.max(xi, max[0])
           max[1] = Math.max(yj, max[1])
+        }
+      }
+
+      for(var y = j; y <= max[1]; y++){
+        for(var x = i; x <= max[0]; x++){
+          gridCells[x+'x'+y].used = true
         }
       }
 
@@ -592,9 +779,9 @@ function decorateGrid(gridSize){
 }
 
 function drawGrid(size, rc){
-  var gridS = gridSize * random(1.0,1.5)
+  currentGridSize = gridSize * random(1.0,1.5)
   var offset = 10
-  var cell = gridS + gridSpacing + offset/2
+  var cell = currentGridSize + gridSpacing + offset/2
   var hLeftOver = size[0] % cell
   var vLeftOver = size[1] % cell
 
@@ -610,11 +797,19 @@ function drawGrid(size, rc){
 
   for(var index in gridObjs){
     var obj = gridObjs[index]
-    var x = offsetX + obj.x * gridS + gridSpacing*obj.x
-    var y = offsetY + obj.y * gridS + gridSpacing*obj.y
+    var x = offsetX + obj.x * currentGridSize + gridSpacing * obj.x
+    var y = offsetY + obj.y * currentGridSize + gridSpacing * obj.y
 
-    var w = gridS*obj.w + gridSpacing*(obj.w-1)
-    var h = gridS*obj.h + gridSpacing*(obj.h-1)
+    var w = currentGridSize * obj.w + gridSpacing * (obj.w-1)
+    var h = currentGridSize * obj.h + gridSpacing * (obj.h-1)
+
+    if(obj.name == 'Container'){
+      var spacing = gridSpacing*random(0.5,1.0)
+      x-=spacing/2
+      y-=spacing/2
+      w+=spacing
+      h+=spacing
+    }
 
     var obj = createObj(obj, x, y, w, h)
 
@@ -625,9 +820,22 @@ function drawGrid(size, rc){
     objs[i].draw(rc)
   }
 
+  lastObjs = objs
+}
+
+function redraw() {
+  for(var i in lastObjs)
+    lastObjs[i].draw(rc)
+}
+
+function clear(){
+  context.fillStyle = 'white'
+  context.fillRect(0,0, width, height)
 }
 
 function randomizeStyle(){
+
+  currentCaus = random(caus[0], caus[1])
   style = {
     roughness: Math.random()*0.5,
     bowing: Math.random()*10,

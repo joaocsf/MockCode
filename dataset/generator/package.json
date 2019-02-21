@@ -7,9 +7,9 @@
     "build:html": "pug src/html/ -o dist/ -P",
     "watch:css": "node-sass src/sass/app.scss -o dist/css/ -w",
     "build:css": "node-sass src/sass/app.scss -o dist/css/",
-    "watch:js": "rollup -cw",
+    "watch:js": "rollup -c --watch",
     "build:js": "rollup -c",
-    "serve": "live-server dist/",
+    "serve": "live-server dist/ --browser=firefox",
     "dev": "npm-run-all -p serve watch:html watch:css watch:js",
     "build": "npm-run-all -p build:html build:css build:js"
   },
@@ -22,6 +22,7 @@
     "rollup-plugin-buble": "^0.19.2",
     "rollup-plugin-commonjs": "^9.1.0",
     "rollup-plugin-node-resolve": "^3.3.0",
+    "chokidar": "^2.1.2",
     "autoprefixer": "^7.1.1",
     "live-server": "^1.2.0",
     "npm-run-all": "^4.0.2"

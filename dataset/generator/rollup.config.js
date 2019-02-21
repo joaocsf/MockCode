@@ -14,5 +14,8 @@ export default {
     buble(),
     nodeResolve({ browser: true, jsnext: true, main: true }),
     commonjs()
-  ]
+  ],
+  watch:{
+    chokidar: false
+  }
 }
