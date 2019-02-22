@@ -144,35 +144,65 @@ button{
   
 }
 
-.button{
-  border-top-left-radius: 1em;
-  border-bottom-left-radius: 1em;
-  background-color: #6D4C41;
-  
+.label div span{
+  border-width: 0.2em;
+  border-style: solid;
 }
 
-.dropdown{
-  background-color: #558B2F;
+.label div span{
+
+  border-left-style: none;
+  border-right-style: none;
+
+  &:first-child{
+    border-left-style: solid;
+    border-top-left-radius: 1em;
+    border-bottom-left-radius: 1em;
+  }
+
+  &:last-child{
+    border-right-style: solid;
+    border-top-right-radius: 1em;
+    border-bottom-right-radius: 1em;
+  }
+}
+
+.label div{
+  margin-bottom: 1em;
+  margin-top: 0.5em;
+}
+
+span.button{
+  border-color: #6D4C41;
+  color: #6D4C41;
+}
+
+span.dropdown{
+  border-color: #558B2F;
+  color: #558B2F;
 }
 
 span.checkboxa{
-  background-color: #006064;
+  border-color: #006064;
+  color: #006064;
 }
 
-.radiobutton{
-  background-color: #1565C0;
+span.radiobutton{
+  border-color: #1565C0;
+  color: #1565C0;
 }
 
 span.textfield{
-  background-color: #EF6C00;
+  border-color: #EF6C00;
+  color: #EF6C00;
 }
 
-.picture{
-  background-color: #D50000;
+span.picture{
+  border-color: #D50000;
+  color: #D50000;
 }
 
-.textblock{
-  background-color: #6A1B9A;
-  border-top-right-radius: 1em;
-  border-bottom-right-radius: 1em;
+span.textblock{
+  border-color: #6A1B9A;
+  color: #6A1B9A;
 }

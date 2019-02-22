@@ -15,7 +15,11 @@ var gridSpacing = 20
 var currentGridSize = 100
 var currentGridSpacing = 100
 var context = undefined
+var canvas = undefined
 var lastObjs = []
+
+var fileName = "mock"
+var fileIndex = 0
 
 var caus = [0.2,0.4]
 var currentCaus
@@ -33,6 +37,18 @@ class Drawable {
     this.max = [x+w, y+h]
 
     this.generate()
+  }
+
+  getAnnotation(){
+    var name = this.constructor.name
+    var dims = this.getBoxDims()
+    return {
+      class: name,
+      x: dims[0],
+      y: dims[1],
+      w: dims[2],
+      h: dims[3],
+    }
   }
 
   generate(){
@@ -99,6 +115,9 @@ class Container extends Drawable
     this.update_min_max(points)
   }
 
+  getAnnotation(){
+    return undefined
+  }
   drawBox(){
 
   }
@@ -511,7 +530,7 @@ function picture(x,y,w,h){
 //################
 
 function startup(){
-  var canvas = document.getElementsByClassName('canvas')[0]
+  canvas = document.getElementsByClassName('canvas')[0]
   canvas.width=width
   canvas.height=height
   context = canvas.getContext('2d');
@@ -519,24 +538,33 @@ function startup(){
   var offset = 10
   randomizeStyle()
 
-  $('.Debug').click(function(){
-    drawBox = $('.Debug').prop('checked') 
+  $('.debug').click(function(){
+    drawBox = $('.debug').prop('checked') 
     clear()
     redraw()
+    console.log(lastObjs)
   })
 
   $('.generate').click(function (){
-    drawBox = $('.Debug').prop('checked') 
+    drawBox = $('.debug').prop('checked') 
     clear()
     randomizeStyle()
     drawGrid([width, height], rc)
 
   })
 
+  $('.save').mousedown(function (){
+    var content = generateJSONFile(lastObjs)
+    save(content, fileName+fileIndex+".xml", 'application/text')
+  }).mouseup(function(){
+    saveIMG(fileName+fileIndex+".png")
+    fileIndex+=1
+  })
   drawGrid([width, height], rc)
   // draw(rc)
   //rc.circle(width/2, height/2, 90, style)
 }
+
 
 function randomElement(){
   var elems = [
@@ -859,4 +887,41 @@ function draw(rc){
   for(var i in objs){
     objs[i].draw(rc)
   }
+}
+
+function save(content, fileName, contentType){
+  $("<a/>",
+  {
+    download: fileName,
+    href: "data:"+contentType+"," + content
+  }
+  ).appendTo('body').click(function(){
+    $(this).remove()
+  })[0].click()
+}
+
+function saveIMG(fileName){
+  var url = canvas.toDataURL("image/png");
+  console.log($('.save'))
+  $("<a/>",
+  {
+    download: fileName,
+    href: url
+  }
+  ).appendTo('body').click(function(){
+    $(this).remove()
+  })[0].click()
+}
+
+function generateJSONFile(objects){
+  var json = [
+  ]
+  
+  for(var index in objects){
+    var obj = objects[index]
+    var result = obj.getAnnotation()
+    if(result != undefined)
+      json.push(result)
+  }
+  return JSON.stringify(json)
 }
