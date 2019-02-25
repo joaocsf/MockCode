@@ -1,6 +1,7 @@
 /**
  * Settings
  */
+
 @import "settings/settings.index";
 
 /**
@@ -26,7 +27,31 @@
 /**
  * Trumps
  */
+
 @import "trumps/trumps.index";
+
+
+@font-face {
+  font-family: 'Daniel font';
+  src: url('./fonts/Daniel-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Daniel font';
+  src: url('./fonts/Daniel-Bold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Daniel font';
+
+  src: url('./fonts/Daniel-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
 
 $color-blue: #1976D2;
 $color-green: #689F38;
@@ -46,7 +71,12 @@ body{
 
 h1{
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Daniel font';
+  font-weight: bold;
+
+
   margin: 0em;
+  margin-top: 0.4em;
   color: #1976D2;
   font-size: 4em;
   text-shadow: 2px 2px 4px rgba(255,255,255,1.0);
@@ -123,14 +153,36 @@ button{
     border-radius: 10px;
     border-width: 4px;
     border-color: $color-blue;
-    background-color: white;
+    animation: checkOut 0.2s ease;
+    animation-direction: normal;
+    animation-fill-mode: forwards;
+
+
   }
 
   input:checked ~ span{
+    animation: check 0.2s ease;
+    animation-direction: normal;
+    animation-fill-mode: forwards;
+  }
+}
+
+@keyframes checkOut {
+  0%{
     background-color: $color-blue;
   }
+  100% {
+    background-color: white;
+  }
+}
 
-  
+@keyframes check {
+  0%{
+    background-color: white;
+  }
+  100% {
+    background-color: $color-blue;
+  }
 }
 
 .label {

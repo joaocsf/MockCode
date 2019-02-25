@@ -203,43 +203,55 @@ class Button extends Drawable
     for(var p in points){
       set_min_max(this.min, this.max, points[p])
     }
-    points = []
-    var nPoints = this.w/50
-    nPoints *= Math.random()/2+2
-    nPoints = Math.floor(nPoints)
-    var size = 1/nPoints
-    var hOffset = 0.2
-    if(Math.random() > 0.5)
-      nPoints = 2
-    
-    var direction = Math.random() > 0.5
-    this.w = this.max[0] - this.min[0]
-    for(var i = 0; i < nPoints; i++){
-      var pt = [0,0]
-      var rand = [-0.1, -0.1]
-      if(i == 0){
-        rand[0] =0
-        rand[1] =2
-      }
-      
-      if(i == nPoints-1){
-        rand[0] =-2
-        rand[1] =0
-      }
-      
-      
-      var frac = ((i/(nPoints-1)))
-      var offsetX = size * random(rand[0],rand[1])
-      pt[0] = this.w * (frac + offsetX)
 
-      pt[1] = this.h * (direction ? random(0.5,0.5+hOffset) : random(0.5-hOffset,0.5))
-      pt[0] += this.min[0]
-      pt[1] += this.min[1]
+    this.hasText = Math.random() > 0.5
 
-      direction = !direction
-      points.push(
-        pt
-      )
+    if(this.hasText){
+      var width = this.max[0] - this.min[0]
+      var characters = width/30
+      characters*=random(0.6,1.0)
+      characters = Math.floor(characters)
+      console.log("chars" + characters)
+      this.text = randomText(characters)
+    }else{
+      points = []
+      var nPoints = this.w/50
+      nPoints *= Math.random()/2+2
+      nPoints = Math.floor(nPoints)
+      var size = 1/nPoints
+      var hOffset = 0.2
+      if(Math.random() > 0.5)
+        nPoints = 2
+      
+      var direction = Math.random() > 0.5
+      this.w = this.max[0] - this.min[0]
+      for(var i = 0; i < nPoints; i++){
+        var pt = [0,0]
+        var rand = [-0.1, -0.1]
+        if(i == 0){
+          rand[0] =0
+          rand[1] =2
+        }
+        
+        if(i == nPoints-1){
+          rand[0] =-2
+          rand[1] =0
+        }
+        
+      
+        var frac = ((i/(nPoints-1)))
+        var offsetX = size * random(rand[0],rand[1])
+        pt[0] = this.w * (frac + offsetX)
+
+        pt[1] = this.h * (direction ? random(0.5,0.5+hOffset) : random(0.5-hOffset,0.5))
+        pt[0] += this.min[0]
+        pt[1] += this.min[1]
+
+        direction = !direction
+        points.push(
+          pt
+        )
+      }
     }
 
     for(var i = 0; i < points.length - 1; i++){
@@ -248,6 +260,12 @@ class Button extends Drawable
         [points[i], points[i+1]]
       )
     }
+  }
+
+  onDraw(rc){
+    super.onDraw()
+    if(!this.hasText) return
+    drawText(this.text,this.min,this.max)
   }
 }
 
@@ -291,50 +309,69 @@ class TextBlock extends Drawable
       nPoints = 2
       hOffset = 0.2
 
-    for(var i = 0; i < nPoints; i++){
-      var pt = [0,0]
+    this.hasText = Math.random() > 0.5
+    this.hasText = this.h < 30? false : this.hasText
+    if(this.hasText){
+      var width = this.max[0] - this.min[0]
+      var height = this.max[1] - this.min[1]
+      this.min[1]-=height*random(0,0.5)
+      this.max[1]+=height*random(0,0.5)
+      var characters = width/20
+      characters*=random(0.6,1.0)
+      characters = Math.floor(characters)
+      console.log("chars" + characters)
+      this.text = randomText(characters)
+    }else{
 
-      var rand = [-0.1, -0.1]
-      if(i == 0){
-        rand[0] =0
-        rand[1] =1
+      for(var i = 0; i < nPoints; i++){
+        var pt = [0,0]
+
+        var rand = [-0.1, -0.1]
+        if(i == 0){
+          rand[0] =0
+          rand[1] =1
+        }
+        
+        if(i == nPoints-1){
+          rand[0] =-1
+          rand[1] =0
+        }
+
+        var frac = ((i/(nPoints-1)))
+        var offsetX = size * random(rand[0],rand[1])
+        pt[0] = this.w * (frac + offsetX)
+
+        pt[1] = this.h * (direction ? random(0.5,0.5+hOffset) : random(0.5-hOffset,0.5))
+        pt[0] += this.x
+        pt[1] += this.y
+        direction = !direction
+
+        points.push(
+          pt
+        )
       }
+
+      if(randomize)
+        mutate(points)
       
-      if(i == nPoints-1){
-        rand[0] =-1
-        rand[1] =0
+      this.points = points
+      set_min_max(this.min, this.max, points[0])
+      for(var i = 0; i < points.length - 1; i++){
+        set_min_max(this.min, this.max, points[i+1])
+
+        this.lines.push(
+          [points[i], points[i+1]]
+        )
       }
-
-      var frac = ((i/(nPoints-1)))
-      var offsetX = size * random(rand[0],rand[1])
-      pt[0] = this.w * (frac + offsetX)
-
-      pt[1] = this.h * (direction ? random(0.5,0.5+hOffset) : random(0.5-hOffset,0.5))
-      pt[0] += this.x
-      pt[1] += this.y
-      direction = !direction
-
-      points.push(
-        pt
-      )
-    }
-
-    if(randomize)
-      mutate(points)
-    
-    this.points = points
-    set_min_max(this.min, this.max, points[0])
-    for(var i = 0; i < points.length - 1; i++){
-      set_min_max(this.min, this.max, points[i+1])
-
-      this.lines.push(
-        [points[i], points[i+1]]
-      )
     }
   }
 
   onDraw(rc){
-    rc.curve(this.points, style)
+    if(!this.hasText)
+      rc.curve(this.points, style)
+    else{
+      drawText(this.text, this.min, this.max)
+    }
   }
 }
 
@@ -542,7 +579,6 @@ function startup(){
     drawBox = $('.debug').prop('checked') 
     clear()
     redraw()
-    console.log(lastObjs)
   })
 
   $('.generate').click(function (){
@@ -555,7 +591,7 @@ function startup(){
 
   $('.save').mousedown(function (){
     var content = generateJSONFile(lastObjs)
-    save(content, fileName+fileIndex+".xml", 'application/text')
+    save(content, fileName+fileIndex+".json", 'application/text')
   }).mouseup(function(){
     saveIMG(fileName+fileIndex+".png")
     fileIndex+=1
@@ -573,7 +609,7 @@ function randomElement(){
     {name: 'RadioButton', expand: 'v', split: 'v', targetH: random(40,45), addText: true},
     {name: 'Textfield'  , expand: 'h', split: 'v', targetH: random(40,50)},
     {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: random(40,50), addText: true},
-    {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: random(20,40)},
+    {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: random(20,50)},
     {name: 'Button'     , expand: 'a', split: 'v', targetH: random(50,60)},
   ]
   var index = Math.floor(Number(random(0, elems.length)))
@@ -858,7 +894,7 @@ function redraw() {
 
 function clear(){
   context.fillStyle = 'white'
-  context.fillRect(0,0, width, height)
+  context.fillRect(0,0, canvas.width, canvas.height)
 }
 
 function randomizeStyle(){
@@ -870,6 +906,52 @@ function randomizeStyle(){
     strokeWidth:Math.random()*4+1,
     hachureGap: Math.random()*4
   }
+}
+
+function randomText(chars){
+  var text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var res = ''
+
+  for(var i = 0; i < chars; i++){
+    res+=text.charAt(Math.floor(Math.random()*text.length))
+  }
+
+  return res;
+}
+
+function drawText(text, min, max){
+  console.log('Here')
+  var height = max[1] - min[1]
+  var width =  max[0] - min[0]
+
+  context.font=height+"px Daniel font"
+
+  var textWidth = context.measureText(text).width
+  var textHeight = context.measureText(text).height
+
+  var realHeight = height
+  var leftOver = width-textWidth
+
+  if(textWidth>width){
+
+    var finalWidth = width*random(0.6,1.0)
+    leftOver = width - finalWidth
+
+    realHeight = height * finalWidth / textWidth
+  }
+
+  if(textHeight>height){
+      realHeight = height*random(0.6,1.0)
+  }
+  realHeight *=random(0.7,1.0)
+
+  context.font=realHeight+"px Daniel font"
+  var x = min[0] + leftOver*Math.random()
+  var y = max[1] - height/4
+
+  console.log("Drawwing" + realHeight + " Text:" + text + " [" + x + ", " + y + "]")
+  context.fillStyle="#000"
+  context.fillText(text, x, y)
 }
 
 function draw(rc){
