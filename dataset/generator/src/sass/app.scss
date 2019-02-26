@@ -88,22 +88,99 @@ h1{
   margin: auto;
   justify-content: center;
 }
- 
-button{
+
+.unselect{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.buttons .btn{
   height: 60px;
   background-color: white;
   font-size: 1em;
-  width: 10em;
-  border: 20px, solid;
-  border-radius: 20cm;
   margin: 2em;
-  color: #1976D2;
-  font-weight: bolder;
-  border-width: 0.5em;
-  border-color: #1976D2;
+  width: 10em;
+
+  .shape{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 20px, solid;
+    border-radius: 20cm;
+    color: #1976D2;
+    font-weight: bolder;
+    border-width: 0.5em;
+    border-color: #1976D2;
+    border-style: solid;
+    
+    .content{
+      position: relative;
+      user-select: none;
+    }
+
+    cursor: pointer; 
+  }
+
 }
 
-.save{
+.relative{
+  position: relative;
+  div {
+    position: absolute;
+    width: auto;
+    height: auto;
+    left:0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
+}
+
+.btn div:hover{
+  animation: buttonHover 0.1s ease;
+  animation-fill-mode: forwards;
+}
+
+.btn div:active{
+  animation: buttonClick 0.1s ease;
+  animation-fill-mode: forwards;
+}
+
+@keyframes buttonClick{
+  0%{
+    top:0;
+    bottom: 0;
+  }
+  50%{
+    top:    5px;
+    bottom: 5px;
+  }
+  100%{
+    top: 5px;
+    bottom: 5px;
+  }
+}
+
+@keyframes buttonHover{
+  0%{
+    left: 0;
+    right: 0;
+  }
+  50%{
+    left: -5px;
+    right: -5px;
+  }
+  100%{
+    left: 0;
+    right: 0;
+  }
+}
+
+.btn .shape.save{
   color: #689F38;
   border-color: #689F38;
 }
@@ -121,8 +198,29 @@ button{
   }
 }
 
+.h-align{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.h-align.text{
+  color: $color-green;
+  * span{
+    background-color: $color-green;
+    border-color: $color-green;
+  }
+}
+
+
+.checkbox.debug span{
+  background-color: $color-blue;
+  border-color: $color-blue;
+}
+
 .checkbox{
   position: relative;
+  display: inline-block;
   margin: 0px;
   padding: 0px;
   width: 25px;
@@ -133,7 +231,7 @@ button{
     position: relative;
     margin: 0px;
     padding: 0px;
-    opacity: 1;
+    opacity: 0;
     left: 0px;
     top: 0px;
     width: 25px;
@@ -153,35 +251,54 @@ button{
     border-radius: 10px;
     border-width: 4px;
     border-color: $color-blue;
-    animation: checkOut 0.2s ease;
+    animation: checkOut 0.05s ease;
     animation-direction: normal;
-    animation-fill-mode: forwards;
+    animation-fill-mode: initial;
+    top:50%;
+    bottom:50%;
 
 
   }
 
   input:checked ~ span{
-    animation: check 0.2s ease;
+    animation: check 0.05s ease;
     animation-direction: normal;
-    animation-fill-mode: forwards;
+    animation-fill-mode: initial;
+    top:0%;
+    bottom:0%;
   }
+  
 }
+
+
 
 @keyframes checkOut {
   0%{
-    background-color: $color-blue;
+    top:0%;
+    bottom:0%;
+  }
+  80%{
+    top:60%;
+    bottom:60%;
   }
   100% {
-    background-color: white;
+    top:50%;
+    bottom:50%;
   }
 }
 
 @keyframes check {
   0%{
-    background-color: white;
+    top:50%;
+    bottom:50%;
+  }
+  80%{
+    top:-10%;
+    bottom:-10%;
   }
   100% {
-    background-color: $color-blue;
+    top:0%;
+    bottom:0%;
   }
 }
 

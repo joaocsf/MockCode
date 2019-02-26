@@ -3,14 +3,24 @@ extends layouts/layout
 block content
   dif(class="flex-parent")
     h1 MockGen
-  dif(class="flex-parent")
-    button(class="generate") Generate
-    button(class="save") Save
+  dif(class="flex-parent buttons" )
+    div(class="relative btn")
+      div(class="generate shape")
+        span(class="content unselect") Generate
+    div(class="relative btn")
+      div(class="save shape")
+        span(class="content unselect") Save
   div(class="flex-parent belo")
-    label Debug
-    div(class="checkbox")
-      input(type="checkbox", name="debug", class="debug")
-      span()
+    div(class="h-align debug")
+      label Debug
+      div(class="checkbox debug")
+        input(type="checkbox", name="debug", id="debug", class="checkbox")
+        span()
+    div(class="h-align text")
+      label Text
+      div(class="checkbox")
+        input(type="checkbox", checked="true", name="text", id="text", class="checkbox")
+        span()
   div(class="flex-parent label")
     div
       span(class="button") Button

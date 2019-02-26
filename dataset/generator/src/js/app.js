@@ -9,6 +9,7 @@ var style = {}
 var randomOffset = 10
 var noisyLines = 0.3
 var drawBox = false
+var useText = true
 var boxOffset = 5
 var gridSize = 100
 var gridSpacing = 20
@@ -204,11 +205,11 @@ class Button extends Drawable
       set_min_max(this.min, this.max, points[p])
     }
 
-    this.hasText = Math.random() > 0.5
+    this.hasText = useText? Math.random() > 0.5 : false
 
     if(this.hasText){
       var width = this.max[0] - this.min[0]
-      var characters = width/30
+      var characters = width/20
       characters*=random(0.6,1.0)
       characters = Math.floor(characters)
       console.log("chars" + characters)
@@ -309,11 +310,18 @@ class TextBlock extends Drawable
       nPoints = 2
       hOffset = 0.2
 
-    this.hasText = Math.random() > 0.5
-    this.hasText = this.h < 30? false : this.hasText
-    if(this.hasText){
+    this.hasText = useText? Math.random() > 0.5 : false
+    //this.hasText = this.h < 30? false : this.hasText
+
+    if(this.hasText && useText){
       var width = this.max[0] - this.min[0]
       var height = this.max[1] - this.min[1]
+
+      if(this.h < 30){
+        this.min[1]-=height*random(0.5,1.0)
+        this.max[1]+=height*random(0.5,1.0)
+      }
+
       this.min[1]-=height*random(0,0.5)
       this.max[1]+=height*random(0,0.5)
       var characters = width/20
@@ -575,14 +583,17 @@ function startup(){
   var offset = 10
   randomizeStyle()
 
-  $('.debug').click(function(){
-    drawBox = $('.debug').prop('checked') 
+  $('#debug').click(function(){
+    drawBox = $(this).prop('checked') 
     clear()
     redraw()
   })
+  $('#text').click(function(){
+    useText = $(this).prop('checked') 
+  })
 
   $('.generate').click(function (){
-    drawBox = $('.debug').prop('checked') 
+    drawBox = $('#debug').prop('checked') 
     clear()
     randomizeStyle()
     drawGrid([width, height], rc)
@@ -931,6 +942,7 @@ function drawText(text, min, max){
 
   var realHeight = height
   var leftOver = width-textWidth
+  var leftOverH = height-textHeight
 
   if(textWidth>width){
 
@@ -944,10 +956,11 @@ function drawText(text, min, max){
       realHeight = height*random(0.6,1.0)
   }
   realHeight *=random(0.7,1.0)
-
+  leftOverH = height-realHeight
+  
   context.font=realHeight+"px Daniel font"
   var x = min[0] + leftOver*Math.random()
-  var y = max[1] - height/4
+  var y = max[1] - leftOverH*Math.random()
 
   console.log("Drawwing" + realHeight + " Text:" + text + " [" + x + ", " + y + "]")
   context.fillStyle="#000"
