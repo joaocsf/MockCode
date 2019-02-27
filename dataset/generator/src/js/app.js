@@ -318,12 +318,12 @@ class TextBlock extends Drawable
       var height = this.max[1] - this.min[1]
 
       if(this.h < 30){
-        this.min[1]-=height*random(0.5,1.0)
-        this.max[1]+=height*random(0.5,1.0)
+        this.min[1]-=height*random(0.5,2.0)
+        this.max[1]+=height*random(0.5,2.0)
       }
 
-      this.min[1]-=height*random(0,0.5)
-      this.max[1]+=height*random(0,0.5)
+      this.min[1]-=height*random(0,0.2)
+      this.max[1]+=height*random(0,0.2)
       var characters = width/20
       characters*=random(0.6,1.0)
       characters = Math.floor(characters)
