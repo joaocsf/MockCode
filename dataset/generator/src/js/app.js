@@ -116,9 +116,9 @@ class Container extends Drawable
     this.update_min_max(points)
   }
 
-  getAnnotation(){
-    return undefined
-  }
+  //getAnnotation(){
+    //return undefined
+  //}
   drawBox(){
 
   }
@@ -318,12 +318,12 @@ class TextBlock extends Drawable
       var height = this.max[1] - this.min[1]
 
       if(this.h < 30){
-        this.min[1]-=height*random(0.5,2.0)
-        this.max[1]+=height*random(0.5,2.0)
+        this.min[1]-=random(1.0,1 + 1/this.h)*(30-this.h)
+        this.max[1]+=random(1.0,1 + 1/this.h)*(30-this.h)
+        //rc.rectangle(this.x, this.y, this.w, this.h, {fill:'red'})
       }
-
-      this.min[1]-=height*random(0,0.2)
-      this.max[1]+=height*random(0,0.2)
+      this.min[1]-=height*random(0,0.1)
+      this.max[1]+=height*random(0,0.1)
       var characters = width/20
       characters*=random(0.6,1.0)
       characters = Math.floor(characters)
@@ -602,10 +602,11 @@ function startup(){
 
   $('.save').mousedown(function (){
     var content = generateJSONFile(lastObjs)
-    save(content, fileName+fileIndex+".json", 'application/text')
-  }).mouseup(function(){
-    saveIMG(fileName+fileIndex+".png")
+    var fname = fileName+ ($('#text').prop('checked')? 'text': '')+fileIndex
+    save(content, fname+".json", 'application/text')
+    saveIMG(fname+".png")
     fileIndex+=1
+  }).mouseup(function(){
   })
   drawGrid([width, height], rc)
   // draw(rc)
@@ -931,7 +932,6 @@ function randomText(chars){
 }
 
 function drawText(text, min, max){
-  console.log('Here')
   var height = max[1] - min[1]
   var width =  max[0] - min[0]
 
@@ -955,7 +955,7 @@ function drawText(text, min, max){
   if(textHeight>height){
       realHeight = height*random(0.6,1.0)
   }
-  realHeight *=random(0.7,1.0)
+  realHeight *=random(0.8,1.0)
   leftOverH = height-realHeight
   
   context.font=realHeight+"px Daniel font"
@@ -997,6 +997,9 @@ function save(content, fileName, contentType){
 
 function saveIMG(fileName){
   var url = canvas.toDataURL("image/png");
+  var win = window.open(url)
+  win.close()
+
   console.log($('.save'))
   $("<a/>",
   {
