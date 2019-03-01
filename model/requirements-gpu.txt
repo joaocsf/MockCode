@@ -1,0 +1,12 @@
+opencv-python==3.4.2.16
+opencv-contrib-python==3.4.2.16
+matplotlib
+keras
+tensorflow-gpu
+keras-resnet
+pillow
+numpy
+pandas_ml
+pandas
+sklearn
+seaborn
