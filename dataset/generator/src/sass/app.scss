@@ -218,6 +218,16 @@ h1{
   border-color: $color-blue;
 }
 
+.boxes{
+  color: #EF6C00;
+}
+.checkbox.boxes{
+  span {
+    background-color: #EF6C00;
+    border-color: #EF6C00;
+  }
+}
+
 .checkbox{
   position: relative;
   display: inline-block;

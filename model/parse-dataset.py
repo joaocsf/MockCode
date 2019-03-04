@@ -1,10 +1,72 @@
 import os
 import sys
+import numpy as np
 import argparse
+import cv2 as cv
 import json
 from pprint import pprint
+import multiprocessing.dummy as mp
 
-def processFile(file, datasetDir, outputDir, classes):
+splitImages = False
+splitDir = False
+datasetDir = ''
+outputDir = ''
+relative2Output = False
+classes = []
+totalfiles = 0
+currfile = 0
+entries = []
+
+def box2string(boxes):
+  strboxes = []
+  for box in boxes:
+    value = "{0:0.0f},{1:0.0f},{2:0.0f},{3:0.0f},{4:0.0f}".format(
+      box['xMin'],box['yMin'],box['xMax'],box['yMax'],box['classID'])
+    strboxes.append(value)
+
+  return strboxes
+
+def lerpPX(a,b,px):
+  x = b[0]-a[0]
+  y = b[1]-a[1]
+  return (px/x, px/y)
+
+
+def lerp(a,b,t):
+  x = a[0] + (b[0]-a[0])*t[0]
+  y = a[1] + (b[1]-a[1])*t[1]
+  return (int(x),int(y))
+
+
+def remove_boxes(img, boxes, classes):
+
+  # img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+  # img = ~img
+  # img = cv.Canny(img,200,250)
+  # img = ~img
+  # img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+  # kernel = np.ones((5,5), np.uint8)
+  # img = cv.erode(img, kernel, iterations=2) 
+
+  for box in boxes:
+    if(classes[box['classID']] == 'Container'):
+      continue
+    pt1 = (int(box['xMin']), int(box['yMin']))
+    pt2 = (int(box['xMax']), int(box['yMax']))
+
+    lerpValue = lerpPX(pt1, pt2, 5)
+    p1 = lerp(pt1, pt2, lerpValue)
+    p2 = lerp(pt1, pt2, (1-lerpValue[0], 1-lerpValue[1]))
+    
+    cv.rectangle(img, p1, p2, (255,255,255), thickness=-1)
+
+  return img
+
+def processFile(file):
+  global splitDir, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries
+
+  currfile+=1
+  print_progressbar(currfile/totalfiles, prefix='Parsing', suffix=file )
 
   fileName = file.replace(".json","")
   imagePath = os.path.join(datasetDir, fileName+".png")
@@ -30,30 +92,75 @@ def processFile(file, datasetDir, outputDir, classes):
 
       if(x < 0): x = 0
       if(y < 0): y = 0
-
+      
       boxes.append(
-        "{0:0.0f},{1:0.0f},{2:0.0f},{3:0.0f},{4:0.0f}".format(x,y,xMax,yMax,classID)
+        {
+          'xMin': x,
+          'xMax': xMax,
+          'yMin': y,
+          'yMax': yMax,
+          'classID': classID
+        }
       )
 
-  entry = imagePath + " " + ' '.join(boxes)
-  return entry
+  if splitDir is None:
+    entry = imagePath + " " + ' '.join(box2string(boxes))
+    entries.append(entry)
+  else:
+    normal_dir     = os.path.join(splitDir, 'normal/')
+    containers_dir = os.path.join(splitDir, 'containers/')
 
-def parseFiles(datasetDir, outputDir, relative2Output, classes):
+    img_normal_dir      = os.path.join(normal_dir     , fileName + ".png")
+    img_containers_dir  = os.path.join(containers_dir , fileName + ".png")
+
+    image = cv.imread(imagePath, cv.IMREAD_COLOR)
+
+    cv.imwrite(img_normal_dir     , image)
+
+    image = remove_boxes(image, boxes, classes)
+
+    cv.imwrite(img_containers_dir , image)
+
+    normalBoxes     = box2string( [ x for x in boxes if not classes[x['classID']] == 'Container'  ]  )
+    containerBoxes  = box2string( [ x for x in boxes if     classes[x['classID']] == 'Container'  ]  )
+
+    entries.append(img_normal_dir     + " " + ' '.join(normalBoxes))
+    entries.append(img_containers_dir + " " + ' '.join(containerBoxes))
+
+
+def parseFiles(_datasetDir, _outputDir, _relative2Output, _classes):
+  global datasetDir, outputDir, relative2Output, classes, currfile, totalfiles, entries
+  datasetDir = _datasetDir
+  outputDir = _outputDir
+  relative2Output = _relative2Output
+  classes = _classes
   print('Dataset Directory:', datasetDir)
   print('Output Directory:', outputDir)
   print('Relative to Output?', relative2Output)
 
   nfiles = int(len(os.listdir(datasetDir))/2)
   index = 1
-  lines = []
-  with open(os.path.join(outputDir, 'trainset'), 'w') as fOut:
-    for file in os.listdir(datasetDir):
-      if not file.endswith(".json"):
-        continue
+  jsonfiles = []
+  for file in os.listdir(datasetDir):
+    if not file.endswith(".json"):
+      continue
+    jsonfiles.append(file)
 
-      index+=1
-      print_progressbar(index/nfiles, prefix='Parsing', suffix=file )
-      entry = processFile(file, datasetDir, outputDir, classes)    
+    print_progressbar(index/nfiles, prefix='FindingJSON', suffix=file)
+    index+=1
+
+
+  totalfiles = len(jsonfiles)
+  currfile = 0
+  print('\n')
+
+  with open(os.path.join(outputDir, 'trainset'), 'w') as fOut:
+    p = mp.Pool(8)
+    p.map(processFile, jsonfiles)
+    p.close()
+    p.join()
+
+    for entry in entries:
       fOut.write(entry+'\n')
 
 def print_progressbar(percentage, width=50, prefix='>', suffix='...'):
@@ -62,7 +169,7 @@ def print_progressbar(percentage, width=50, prefix='>', suffix='...'):
   bar = '='*filled + '-'*toFill
   suffix += ' '*(20-len(suffix))
   
-  print('{0} [{2}] {3:0.2f}% {1}'.format(prefix, suffix, bar, percentage), end='\r')
+  print('\r{0} [{2}] {3:0.2f}% {1}'.format(prefix, suffix, bar, percentage), end='\r')
 
 def createParser():
   parser = argparse.ArgumentParser(description='Generate Dataset Trainning Files')
@@ -78,7 +185,12 @@ def createParser():
   parser.add_argument(
     '-c',
     dest='classes',
-    help='Classess',
+    help='Classes',
+  )
+  parser.add_argument(
+    '-s',
+    dest='split',
+    help='Split Folder',
   )
   parser.add_argument(
     '-r',
@@ -99,6 +211,7 @@ def read_classes(classfile):
   return classes
 
 def execute():
+  global splitDir
   parser = createParser()
   args = parser.parse_args()
 
@@ -107,7 +220,7 @@ def execute():
     if args.r > 0:
       relative_path = True 
     
-  if (args.classes is None):
+  if args.classes is None:
     print('-c is required')
     return
   
@@ -115,7 +228,9 @@ def execute():
 
   classes = read_classes(args.classes)
 
-  if(len(classes) == 0):
+  splitDir = args.split
+
+  if len(classes) == 0:
     print('Classes Missing')
     return
 

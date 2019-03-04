@@ -18,6 +18,7 @@ var currentGridSpacing = 100
 var context = undefined
 var canvas = undefined
 var lastObjs = []
+var onlyBoxes = false
 
 var fileName = "mock"
 var fileIndex = 0
@@ -116,6 +117,16 @@ class Container extends Drawable
     this.update_min_max(points)
   }
 
+  onDraw(rc){
+    var stl = JSON.parse(JSON.stringify(style))
+    stl.stroke='black'
+    console.log(stl)
+    for(var i in this.lines){
+      var l = this.lines[i]
+      strange_line(l[0], l[1], currentCaus, stl)
+    }
+  }
+  
   //getAnnotation(){
     //return undefined
   //}
@@ -265,7 +276,7 @@ class Button extends Drawable
 
   onDraw(rc){
     super.onDraw()
-    if(!this.hasText) return
+    if(!this.hasText || onlyBoxes) return
     drawText(this.text,this.min,this.max)
   }
 }
@@ -377,7 +388,7 @@ class TextBlock extends Drawable
   onDraw(rc){
     if(!this.hasText)
       rc.curve(this.points, style)
-    else{
+    else if(!onlyBoxes){
       drawText(this.text, this.min, this.max)
     }
   }
@@ -511,7 +522,8 @@ function p_lerp(a,b,t){
   return p_sum(a, p_mult(p_sub(b,a), t))
 }
 
-function strange_line(a,b, weight){
+function strange_line(a,b, weight, stl){
+  stl = stl || style
   var qrt = p_lerp(a,b,0.25)
   var mid = p_lerp(a,b,0.5)
   var qrt_2 = p_lerp(a,b,0.75)
@@ -526,7 +538,7 @@ function strange_line(a,b, weight){
     pts[1],
     b
   )
-  rc.curve(points, style)  
+  rc.curve(points, stl)  
 }
 
 function line(a, b){
@@ -585,6 +597,12 @@ function startup(){
 
   $('#debug').click(function(){
     drawBox = $(this).prop('checked') 
+    clear()
+    redraw()
+  })
+  $('#boxes').click(function(){
+    onlyBoxes = $(this).prop('checked') 
+    style.stroke = onlyBoxes? 'white':'black'
     clear()
     redraw()
   })
@@ -913,6 +931,7 @@ function randomizeStyle(){
 
   currentCaus = random(caus[0], caus[1])
   style = {
+    stroke: onlyBoxes? 'white': 'black',
     roughness: Math.random()*0.5,
     bowing: Math.random()*10,
     strokeWidth:Math.random()*4+1,
