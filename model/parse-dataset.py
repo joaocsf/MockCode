@@ -74,6 +74,7 @@ def processFile(file):
 
   if not os.path.isfile(imagePath):
     print('\nFILE NOT FOUND' + imagePath)
+    return
 
   annotationName = file
 
@@ -104,7 +105,11 @@ def processFile(file):
       )
 
   if splitDir is None:
-    entry = imagePath + " " + ' '.join(box2string(boxes))
+    t_path = imagePath
+    if(relative2Output):
+      t_path = os.path.relpath(imagePath, outputDir)
+
+    entry = t_path + " " + ' '.join(box2string(boxes))
     entries.append(entry)
   else:
     normal_dir     = os.path.join(splitDir, 'normal/')
@@ -123,6 +128,10 @@ def processFile(file):
 
     normalBoxes     = box2string( [ x for x in boxes if not classes[x['classID']] == 'Container'  ]  )
     containerBoxes  = box2string( [ x for x in boxes if     classes[x['classID']] == 'Container'  ]  )
+
+    if(relative2Output):
+      img_normal_dir = os.path.relpath(img_normal_dir, outputDir)
+      img_containers_dir = os.path.relpath(img_containers_dir, outputDir)
 
     entries.append(img_normal_dir     + " " + ' '.join(normalBoxes))
     entries.append(img_containers_dir + " " + ' '.join(containerBoxes))
