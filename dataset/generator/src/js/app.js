@@ -1,6 +1,40 @@
 
 document.addEventListener("DOMContentLoaded", startup)
 
+module.exports = {
+  generate_image(canvass, roughCanvas, text, boxes){
+    onlyBoxes = boxes
+    useText = text
+    canvas = canvass
+    canvas.width=width
+    canvas.height=height
+    context = canvas.getContext('2d');
+    rc = roughCanvas.canvas(canvas)
+    clear()
+    randomizeStyle()
+    drawGrid([width, height], rc)
+    return lastObjs
+  },
+
+  regenerate_image(canvass, roughCanvas, text, boxes, lastObjss){
+    onlyBoxes = boxes
+    useText = text
+    lastObjs = lastObjss
+    style.stroke = onlyBoxes? 'white':'black'
+    canvas = canvass
+    context = canvas.getContext('2d');
+    rc = roughCanvas.canvas(canvas)
+    clear()
+    redraw()
+ 
+  },
+
+  generateJSON(objects){
+    return generateJSONFile(objects)
+  }
+
+}
+
 var width = 800
 var height = 900
 var rc = null
@@ -120,7 +154,6 @@ class Container extends Drawable
   onDraw(rc){
     var stl = JSON.parse(JSON.stringify(style))
     stl.stroke='black'
-    console.log(stl)
     for(var i in this.lines){
       var l = this.lines[i]
       strange_line(l[0], l[1], currentCaus, stl)
@@ -223,7 +256,6 @@ class Button extends Drawable
       var characters = width/20
       characters*=random(0.6,1.0)
       characters = Math.floor(characters)
-      console.log("chars" + characters)
       this.text = randomText(characters)
     }else{
       points = []
@@ -338,7 +370,6 @@ class TextBlock extends Drawable
       var characters = width/20
       characters*=random(0.6,1.0)
       characters = Math.floor(characters)
-      console.log("chars" + characters)
       this.text = randomText(characters)
     }else{
 
@@ -981,7 +1012,6 @@ function drawText(text, min, max){
   var x = min[0] + leftOver*Math.random()
   var y = max[1] - leftOverH*Math.random()
 
-  console.log("Drawwing" + realHeight + " Text:" + text + " [" + x + ", " + y + "]")
   context.fillStyle="#000"
   context.fillText(text, x, y)
 }
@@ -1019,7 +1049,6 @@ function saveIMG(fileName){
   var win = window.open(url)
   win.close()
 
-  console.log($('.save'))
   $("<a/>",
   {
     download: fileName,

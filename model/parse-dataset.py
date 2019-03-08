@@ -8,7 +8,7 @@ from pprint import pprint
 import multiprocessing.dummy as mp
 
 splitImages = False
-splitDir = False
+mustSplit = False
 datasetDir = ''
 outputDir = ''
 relative2Output = False
@@ -16,6 +16,7 @@ classes = []
 totalfiles = 0
 currfile = 0
 entries = []
+prefix = "Parsing"
 
 def box2string(boxes):
   strboxes = []
@@ -63,18 +64,24 @@ def remove_boxes(img, boxes, classes):
   return img
 
 def processFile(file):
-  global splitDir, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries
+  global mustSplit, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries, prefix
 
   currfile+=1
-  print_progressbar(currfile/totalfiles, prefix='Parsing', suffix=file )
+  print_progressbar(currfile/totalfiles, prefix=prefix, suffix=file )
 
-  fileName = file.replace(".json","")
+  fileName = file.replace("_objs.json","")
   imagePath = os.path.join(datasetDir, fileName+".png")
+  imageBoxesPath = os.path.join(datasetDir, fileName+"_boxes.png")
   jsonPath = os.path.join(datasetDir, file)
 
-  if not os.path.isfile(imagePath):
-    print('\nFILE NOT FOUND' + imagePath)
-    return
+  if not os.path.isfile(imagePath) or not os.path.isfile(imageBoxesPath):
+
+    imagePath = os.path.join(datasetDir, fileName+"_text.png")
+    imageBoxesPath = os.path.join(datasetDir, fileName+"_text_boxes.png")
+
+    if not os.path.isfile(imagePath) or not os.path.isfile(imageBoxesPath):
+      print('\nFILE NOT FOUND' + imagePath)
+      return
 
   annotationName = file
 
@@ -104,41 +111,60 @@ def processFile(file):
         }
       )
 
-  if splitDir is None:
-    t_path = imagePath
-    if(relative2Output):
-      t_path = os.path.relpath(imagePath, outputDir)
-
-    entry = t_path + " " + ' '.join(box2string(boxes))
-    entries.append(entry)
-  else:
-    normal_dir     = os.path.join(splitDir, 'normal/')
-    containers_dir = os.path.join(splitDir, 'containers/')
-
-    img_normal_dir      = os.path.join(normal_dir     , fileName + ".png")
-    img_containers_dir  = os.path.join(containers_dir , fileName + ".png")
-
-    image = cv.imread(imagePath, cv.IMREAD_COLOR)
-
-    cv.imwrite(img_normal_dir     , image)
-
-    image = remove_boxes(image, boxes, classes)
-
-    cv.imwrite(img_containers_dir , image)
-
+  if not mustSplit:
     normalBoxes     = box2string( [ x for x in boxes if not classes[x['classID']] == 'Container'  ]  )
     containerBoxes  = box2string( [ x for x in boxes if     classes[x['classID']] == 'Container'  ]  )
-
+    toImage = imagePath
+    toImageBoxes = imageBoxesPath
     if(relative2Output):
-      img_normal_dir = os.path.relpath(img_normal_dir, outputDir)
-      img_containers_dir = os.path.relpath(img_containers_dir, outputDir)
+      toImage = os.path.relpath(imagePath, outputDir)
+      toImageBoxes = os.path.relpath(imageBoxesPath, outputDir)
 
-    entries.append(img_normal_dir     + " " + ' '.join(normalBoxes))
-    entries.append(img_containers_dir + " " + ' '.join(containerBoxes))
+    entries.append(toImage + " " + ' '.join(normalBoxes))
+    entries.append(toImageBoxes + " " + ' '.join(containerBoxes))
+  else:
+    toImage = imagePath
+    toImageBoxes = imageBoxesPath
+    if(relative2Output):
+      toImage = os.path.relpath(imagePath, outputDir)
+      toImageBoxes = os.path.relpath(imageBoxesPath, outputDir)
+
+    entries.append(toImage + " " + toImageBoxes)
+  # if mustSplit is None:
+  #   t_path = imagePath
+  #   if(relative2Output):
+  #     t_path = os.path.relpath(imagePath, outputDir)
+
+  #   entry = t_path + " " + ' '.join(box2string(boxes))
+  #   entries.append(entry)
+  # else:
+  #   normal_dir     = os.path.join(splitDir, 'normal/')
+  #   containers_dir = os.path.join(splitDir, 'containers/')
+
+  #   img_normal_dir      = os.path.join(normal_dir     , fileName + ".png")
+  #   img_containers_dir  = os.path.join(containers_dir , fileName + ".png")
+
+  #   image = cv.imread(imagePath, cv.IMREAD_COLOR)
+
+  #   cv.imwrite(img_normal_dir     , image)
+
+  #   image = remove_boxes(image, boxes, classes)
+
+  #   cv.imwrite(img_containers_dir , image)
+
+  #   normalBoxes     = box2string( [ x for x in boxes if not classes[x['classID']] == 'Container'  ]  )
+  #   containerBoxes  = box2string( [ x for x in boxes if     classes[x['classID']] == 'Container'  ]  )
+
+  #   if(relative2Output):
+  #     img_normal_dir = os.path.relpath(img_normal_dir, outputDir)
+  #     img_containers_dir = os.path.relpath(img_containers_dir, outputDir)
+
+  #   entries.append(img_normal_dir     + " " + ' '.join(normalBoxes))
+  #   entries.append(img_containers_dir + " " + ' '.join(containerBoxes))
 
 
 def parseFiles(_datasetDir, _outputDir, _relative2Output, _classes):
-  global datasetDir, outputDir, relative2Output, classes, currfile, totalfiles, entries
+  global datasetDir, outputDir, relative2Output, classes, currfile, totalfiles, entries, mustSplit
   datasetDir = _datasetDir
   outputDir = _outputDir
   relative2Output = _relative2Output
@@ -162,15 +188,31 @@ def parseFiles(_datasetDir, _outputDir, _relative2Output, _classes):
   totalfiles = len(jsonfiles)
   currfile = 0
   print('\n')
-
+  
+  oldSplit = mustSplit
+  mustSplit = False
+  
+  prefix = "Parsing"
   with open(os.path.join(outputDir, 'trainset'), 'w') as fOut:
     p = mp.Pool(8)
     p.map(processFile, jsonfiles)
     p.close()
     p.join()
+    fOut.write('\n'.join(entries)+'\n')
+  
+  mustSplit = oldSplit
 
-    for entry in entries:
-      fOut.write(entry+'\n')
+  if(mustSplit):
+    currfile = 0
+    entries = []
+    prefix = "Splitting"
+    with open(os.path.join(outputDir, 'trainset_split'), 'w') as fOut:
+      p = mp.Pool(8)
+      p.map(processFile, jsonfiles)
+      p.close()
+      p.join()
+      
+      fOut.write('\n'.join(entries)+'\n')
 
 def print_progressbar(percentage, width=50, prefix='>', suffix='...'):
   filled = int(width*percentage)
@@ -199,6 +241,7 @@ def createParser():
   parser.add_argument(
     '-s',
     dest='split',
+    action='count',
     help='Split Folder',
   )
   parser.add_argument(
@@ -220,14 +263,11 @@ def read_classes(classfile):
   return classes
 
 def execute():
-  global splitDir
+  global mustSplit
   parser = createParser()
   args = parser.parse_args()
 
-  relative_path = False
-  if not args.r is None:
-    if args.r > 0:
-      relative_path = True 
+  relative_path = (not args.r is None) and args.r > 0
     
   if args.classes is None:
     print('-c is required')
@@ -237,7 +277,7 @@ def execute():
 
   classes = read_classes(args.classes)
 
-  splitDir = args.split
+  mustSplit = (not args.split is None) and args.split > 0
 
   if len(classes) == 0:
     print('Classes Missing')
