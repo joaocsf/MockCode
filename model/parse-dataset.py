@@ -69,19 +69,14 @@ def processFile(file):
   currfile+=1
   print_progressbar(currfile/totalfiles, prefix=prefix, suffix=file )
 
-  fileName = file.replace("_objs.json","")
-  imagePath = os.path.join(datasetDir, fileName+".png")
-  imageBoxesPath = os.path.join(datasetDir, fileName+"_boxes.png")
-  jsonPath = os.path.join(datasetDir, file)
+  fileName = file.replace(".json","")
+  imagePath =      os.path.join(datasetDir, "image/"  + fileName +".png")
+  imageBoxesPath = os.path.join(datasetDir, "mask/"   + fileName +".png")
+  jsonPath =       os.path.join(datasetDir, "annotation/" + file)
 
   if not os.path.isfile(imagePath) or not os.path.isfile(imageBoxesPath):
-
-    imagePath = os.path.join(datasetDir, fileName+"_text.png")
-    imageBoxesPath = os.path.join(datasetDir, fileName+"_text_boxes.png")
-
-    if not os.path.isfile(imagePath) or not os.path.isfile(imageBoxesPath):
-      print('\nFILE NOT FOUND' + imagePath)
-      return
+    print('\nFILE NOT FOUND' + imagePath)
+    return
 
   annotationName = file
 
@@ -169,14 +164,16 @@ def parseFiles(_datasetDir, _outputDir, _relative2Output, _classes):
   outputDir = _outputDir
   relative2Output = _relative2Output
   classes = _classes
+  jsonDir = os.path.join(datasetDir, 'annotation/')
+  print('JSON Directory:', jsonDir)
   print('Dataset Directory:', datasetDir)
   print('Output Directory:', outputDir)
   print('Relative to Output?', relative2Output)
 
-  nfiles = int(len(os.listdir(datasetDir))/2)
+  nfiles = int(len(os.listdir(jsonDir))/2)
   index = 1
   jsonfiles = []
-  for file in os.listdir(datasetDir):
+  for file in os.listdir(jsonDir):
     if not file.endswith(".json"):
       continue
     jsonfiles.append(file)

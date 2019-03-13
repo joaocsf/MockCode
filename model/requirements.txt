@@ -10,3 +10,4 @@ pandas_ml
 pandas
 sklearn
 seaborn
+scikit-image

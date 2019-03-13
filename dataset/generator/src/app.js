@@ -9,10 +9,14 @@ const fs = require('fs')
 registerFont('./src/sass/fonts/Daniel-Regular.otf', { family: 'Daniel font' })
 const canvas = createCanvas(800, 900)
 
-var filename= "../data/mock"
+var dir= "../data/"
 var index = 0
 var text = false
 var numFiles = 6000
+
+mkdir(dir + "image")
+mkdir(dir + "annotation")
+mkdir(dir + "mask")
 
 var startTime = process.hrtime();
 var elapsedTime = 0
@@ -23,7 +27,7 @@ for(var i = 0; i < numFiles; i++){
   var perFile = elapsedTime/i
   var toFinish = (numFiles - i)*perFile
 
-  generateMockup(filename, text, index)
+  generateMockup(dir, text, index)
   index++
   text=!text
   progressbar((i+1)/ numFiles, 50, "Generating", formatDate(toFinish)+ "  Mock"+index)
@@ -59,35 +63,26 @@ function print(text){
   process.stdout.write(text)
 }
 
+function mkdir(dir){
+  if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+  }
+}
 
-function generateMockup(filename, text, index){
-  normalName = filename + index
-    + (text? "_text": '') + ".png"
-  boxesName = filename + index
-    + (text? "_text_": '_') + "boxes" + ".png"
-
-  objsName = filename + index
-    + "_objs.json"
+function generateMockup(dir, text, index){
+  normalName = dir + '/image/'    + index + '.png'
+  boxesName  = dir + '/mask/'     + index + '.png'
+  objsName   = dir + 'annotation/'+ index + '.json' 
   
   objs = drawer.generate_image(canvas, rough, text, false)
   var normalImage = canvas.toBuffer()
   fs.writeFileSync(normalName, normalImage)
-  // var stream = fs.createWriteStream(normalName)
-  // stream.writeSync(normalImage)
-  // stream.close()
 
   fs.writeFileSync(objsName, drawer.generateJSON(objs))
-  // stream.writeSync(
-  //     drawer.generateJSON(objs)
-  //   )
-  // stream.close()
 
   drawer.regenerate_image(canvas, rough, text, true, objs)
   var boxesOnly = canvas.toBuffer()
   fs.writeFileSync(boxesName, boxesOnly)
-  //stream = fs.createWriteStream(boxesName)
-  // stream.writeSync(boxesOnly)
-  // stream.close()
 }
 
 
