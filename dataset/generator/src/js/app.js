@@ -46,7 +46,7 @@ var drawBox = false
 var useText = true
 var boxOffset = 5
 var gridSize = 100
-var gridSpacing = 20
+var gridSpacing = 40
 var currentGridSize = 100
 var currentGridSpacing = 100
 var context = undefined
@@ -345,13 +345,15 @@ class TextBlock extends Drawable
     var points = []
     var nPoints = this.w/50
     nPoints *= Math.random()+2   
-    var size = 1/nPoints
+    var size = 1/(nPoints)
     size/=2
     var direction = Math.random() > 0.5
     var hOffset = 0.5 
     if(Math.random() > 0.5)
       nPoints = 2
       hOffset = 0.2
+
+    nPoints = Math.floor(nPoints)
 
     this.hasText = useText? Math.random() > 0.5 : false
     //this.hasText = this.h < 30? false : this.hasText
@@ -709,13 +711,13 @@ function addObject(object, objs){
   var splitV = object.split === 'v'
 
   if(splitV){
-    var availabelHeight = object.h*currentGridSize
+    var availabelHeight = object.h*(currentGridSize-gridSpacing/2)
     var targetHeight = object.targetH
     
     
     var hSize = targetHeight / availabelHeight
     var hLeftOver = (availabelHeight% targetHeight)/2
-    var offset = random(10,15)
+    var offset = random(5,15)
     var hOffset = offset/availabelHeight
     var occurrences = Math.floor(availabelHeight/(targetHeight+offset))
     var startH = hLeftOver/availabelHeight *object.h
@@ -728,7 +730,6 @@ function addObject(object, objs){
       hOffset: hOffset,
       occur: occurrences,
     }
-    
     var addText = object.addText === true
 
     var copy = JSON.stringify(object)
@@ -738,7 +739,6 @@ function addObject(object, objs){
       newObj.y += startH + hOffset*object.h*i + hSize*object.h*i
       newObj.h = hSize*object.h
       objs.push(newObj)
-      
       if(addText){
         var x = newObj.x + newObj.h *0.7
         var y = newObj.y
@@ -905,7 +905,7 @@ function decorateGrid(gridSize){
 
 function drawGrid(size, rc){
   currentGridSize = gridSize * random(1.0,1.5)
-  var offset = 10
+  var offset = random(10,20)
   var cell = currentGridSize + gridSpacing + offset/2
   var hLeftOver = size[0] % cell
   var vLeftOver = size[1] % cell
@@ -927,9 +927,8 @@ function drawGrid(size, rc){
 
     var w = currentGridSize * obj.w + gridSpacing * (obj.w-1)
     var h = currentGridSize * obj.h + gridSpacing * (obj.h-1)
-
     if(obj.name == 'Container'){
-      var spacing = gridSpacing*random(0.5,1.0)
+      var spacing = gridSpacing*random(0.4,0.8)
       x-=spacing/2
       y-=spacing/2
       w+=spacing
