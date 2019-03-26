@@ -6,12 +6,20 @@ import random
 def segment(path):
   print(path)
   image = cv.imread(path, cv.IMREAD_GRAYSCALE)
-  _, thresh_img = cv.threshold(image, 128, 256, cv.THRESH_BINARY)
+  _, thresh_img = cv.threshold(image, 128, 256, cv.THRESH_BINARY_INV)
+
+  dst = cv.distanceTransform(thresh_img, cv.DIST_C, 0)
+  cv.normalize(dst, dst, 0, 1.0, cv.NORM_MINMAX)
 
   color = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
   color2 = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+  color2[::] = (0,0,0)
+  color3 = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+  color3[::] = (0,0,0)
 
   cv.imshow('Thresh', thresh_img)
+  cv.imshow('Dst', dst)
+  cv.waitKey()
 
   im2, contours, hierarchy = cv.findContours(thresh_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
   size = len(contours)
@@ -32,6 +40,10 @@ def segment(path):
     idx = hierarchy[0][index][3]
     print(idx)
     level = levels[str(idx)]+1
+
+    epsilon = 0.001*cv.arcLength(contour,True)
+    contour = cv.approxPolyDP(contour,epsilon,True)
+    if len(contour) > 200: continue
     clr = lerpColor(
       (0, 0, 0), (255, 255, 255),
       level/float(maxLevel+1)
@@ -46,8 +58,12 @@ def segment(path):
     )
     cv.drawContours(color2, [contour], -1, clr, -1)
 
+    x,y,w,h = cv.boundingRect(contour)
+    cv.rectangle(color3, (x,y), (x+w, y+h), clr, -1)
+
   cv.imshow('Hierarchy', color)
   cv.imshow('Elements', color2)
+  cv.imshow('Rects', color3)
 
 
   cv.waitKey()
