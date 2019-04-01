@@ -12,7 +12,7 @@ const canvas = createCanvas(800, 900)
 var dir= "../data/"
 var index = 0
 var text = false
-var numFiles = 6000
+var numFiles = 12000
 
 mkdir(dir + "image")
 mkdir(dir + "annotation")
