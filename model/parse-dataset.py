@@ -17,6 +17,7 @@ totalfiles = 0
 currfile = 0
 entries = []
 prefix = "Parsing"
+saveMask = False
 
 def box2string(boxes):
   strboxes = []
@@ -64,7 +65,7 @@ def remove_boxes(img, boxes, classes):
   return img
 
 def processFile(file):
-  global mustSplit, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries, prefix
+  global mustSplit, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries, prefix, saveMask
 
   currfile+=1
   print_progressbar(currfile/totalfiles, prefix=prefix, suffix=file )
@@ -116,7 +117,8 @@ def processFile(file):
       toImageBoxes = os.path.relpath(imageBoxesPath, outputDir)
 
     entries.append(toImage + " " + ' '.join(normalBoxes))
-    entries.append(toImageBoxes + " " + ' '.join(containerBoxes))
+    if(saveMask):
+      entries.append(toImageBoxes + " " + ' '.join(containerBoxes))
   else:
     toImage = imagePath
     toImageBoxes = imageBoxesPath
@@ -242,6 +244,12 @@ def createParser():
     help='Split Folder',
   )
   parser.add_argument(
+    '-m',
+    dest='mask',
+    action='count',
+    help='StoreMask?',
+  )
+  parser.add_argument(
     '-r',
     action='count',
     help="Relative To Output?"
@@ -260,7 +268,7 @@ def read_classes(classfile):
   return classes
 
 def execute():
-  global mustSplit
+  global mustSplit, saveMask
   parser = createParser()
   args = parser.parse_args()
 
@@ -275,6 +283,7 @@ def execute():
   classes = read_classes(args.classes)
 
   mustSplit = (not args.split is None) and args.split > 0
+  saveMask = (not args.mask is None) and args.mask > 0
 
   if len(classes) == 0:
     print('Classes Missing')
