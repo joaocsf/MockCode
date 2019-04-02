@@ -22,14 +22,15 @@ def getHeader():
         display: grid; border: 2px solid #000;
         grid-template-columns: repeat(11, 1wr);
         grid-template-rows: repeat(11, 1wr);
+        grid-gap: 10px;
         }
         .border1{
           border: 2px solid #000;
         }
         .img {
-          background-image: url('https://i.imgur.com/kFkrzCX.png');
+          background-image: url('https://i.imgur.com/dfpkiFP.png');
           background-position: center;
-          background-size: cover;
+          background-size: 100% 100%;
           display: block;
           max-width: 100%;
           max-height: 100%;
