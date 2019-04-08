@@ -191,7 +191,7 @@ def parseContainer(file, objs):
   snapToGrid(objs)
   parent = containerStack[-1]
   #objs = sorted(objs, key=lambda obj: (obj['y'], obj['x']))
-  print([ [x['class'], x['x'], x['w']] for x in objs])
+  #print([ [x['class'], x['x'], x['w']] for x in objs])
   for obj in objs:
     if obj['class'] == 'Container':
       file.write(beginContainer(obj))
@@ -202,29 +202,31 @@ def parseContainer(file, objs):
     else:
       writeObj(file, obj)
 
-def parse(inputFile):
+def generate_code(objects):
   with open('index.html', 'w') as indexFile:
-    with open(inputFile, 'r') as file:
-      indexFile.write(getHeader())
+    indexFile.write(getHeader())
+    objs = objects
+
+    maxW = max(objs, key=lambda o: o['x']+o['w'])
+    maxW = maxW['x']+maxW['w']
+    maxH = max(objs, key=lambda o: o['y']+o['h'])
+    maxH = maxH['y']+maxH['h']
+    containerStack.append(
+      {
+        'x':0,
+        'y':0,
+        'w': maxW,
+        'h': maxH
+      }
+    )
+    snapToGrid(containerStack)
+    parseContainer(indexFile, objs)
+    indexFile.write(closeBody())
+
+def parse(inputFile):
+  with open(inputFile, 'r') as file:
       objs = json.load(file)
-
-      maxW = max(objs, key=lambda o: o['x']+o['w'])
-      maxW = maxW['x']+maxW['w']
-      maxH = max(objs, key=lambda o: o['y']+o['h'])
-      maxH = maxH['y']+maxH['h']
-      containerStack.append(
-        {
-          'x':0,
-          'y':0,
-          'w': maxW,
-          'h': maxH
-        }
-      )
-      snapToGrid(containerStack)
-
-      parseContainer(indexFile, objs)
-
-      indexFile.write(closeBody())
+      generate_code(objs)
 
 def main():
   parser = argparse.ArgumentParser(description='Parse To HTML')
