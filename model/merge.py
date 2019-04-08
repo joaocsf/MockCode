@@ -29,6 +29,30 @@ def inside(obj, container):
 
   return overlap/area
 
+def merge_obj(j):
+  document = []
+
+  containers = [x for x in j if x['class'] == 'Container']
+  objects = [x for x in j if not x['class'] == 'Container']
+  print(containers)
+
+  for obj in objects:
+    added = False 
+    for container in containers:
+      if inside(obj, container) > 0.8:
+        container['childs'] = [] if not container.__contains__('childs') else container['childs']
+        container['childs'].append(obj)
+        added = True
+        break
+    
+    if not added:
+      document.append(obj)
+
+  for c in containers:
+    document.append(c)
+  
+  return document
+
 def main():
 
   parser = argparse.ArgumentParser(description='Joins Elements from an JSON file')
@@ -42,31 +66,10 @@ def main():
   outfile = args.out
   print('File' + file)
 
-   
-
   with open(file) as f:
     j = json.load(f)
 
-    document = []
-
-    containers = [x for x in j if x['class'] == 'Container']
-    objects = [x for x in j if not x['class'] == 'Container']
-    print(containers)
-
-    for obj in objects:
-      added = False 
-      for container in containers:
-        if inside(obj, container) > 0.8:
-          container['childs'] = [] if not container.__contains__('childs') else container['childs']
-          container['childs'].append(obj)
-          added = True
-          break
-      
-      if not added:
-        document.append(obj)
-
-    for c in containers:
-      document.append(c)
+    document = merge_obj(j)
     
     with open(outfile, 'w') as f:
       f.write(json.dumps(document))
