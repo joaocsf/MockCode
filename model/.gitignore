@@ -2,3 +2,6 @@
 /keras-yolo3/
 /unet/
 .vscode/
+.h5
+.zip
+.png
