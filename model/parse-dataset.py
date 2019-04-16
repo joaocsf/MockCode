@@ -188,30 +188,15 @@ def parseFiles(_datasetDir, _outputDir, _relative2Output, _classes):
   currfile = 0
   print('\n')
   
-  oldSplit = mustSplit
-  mustSplit = False
-  
-  prefix = "Parsing"
-  with open(os.path.join(outputDir, 'trainset'), 'w') as fOut:
+  prefix = "Parsing" if not mustSplit else 'Splitting'
+  outfile = 'trainset' if not mustSplit else 'maskset'
+
+  with open(os.path.join(outputDir, outfile), 'w') as fOut:
     p = mp.Pool(8)
     p.map(processFile, jsonfiles)
     p.close()
     p.join()
     fOut.write('\n'.join(entries)+'\n')
-  
-  mustSplit = oldSplit
-
-  if(mustSplit):
-    currfile = 0
-    entries = []
-    prefix = "Splitting"
-    with open(os.path.join(outputDir, 'trainset_split'), 'w') as fOut:
-      p = mp.Pool(8)
-      p.map(processFile, jsonfiles)
-      p.close()
-      p.join()
-      
-      fOut.write('\n'.join(entries)+'\n')
 
 def print_progressbar(percentage, width=50, prefix='>', suffix='...'):
   filled = int(width*percentage)
