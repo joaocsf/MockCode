@@ -29,7 +29,7 @@ def init_yolo():
 def to_json(boxes):
   result = []
   for box in boxes:
-    x,y,mx,my,id,c = box
+    x,y,mx,my,id,c, _ = box
     result.append(
       {
         'class': c,
