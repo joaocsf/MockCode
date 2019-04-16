@@ -137,7 +137,7 @@ class YOLO(object):
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
 
-            ret_boxes.append([left, top, right, bottom, c, predicted_class])
+            ret_boxes.append([left, top, right, bottom, c, predicted_class, score])
 
         end = timer()
         return ret_boxes
