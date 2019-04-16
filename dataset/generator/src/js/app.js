@@ -59,18 +59,23 @@ var fileIndex = 0
 
 var caus = [0.2,0.4]
 var currentCaus
-var elems = [
+
+function randomElement(){
+  var elems = [
     {name: 'Picture'    , expand: 'a', split: 'n' },
-    {name: 'Dropdown'   , expand: 'h', split: 'v', targetH: random(40,50)},
-    {name: 'RadioButton', expand: 'v', split: 'v', targetH: random(40,45), addText: true},
-    {name: 'Textfield'  , expand: 'h', split: 'v', targetH: random(40,50)},
-    {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: random(40,50), addText: true},
-    {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: random(20,50)},
-    {name: 'Button'     , expand: 'a', split: 'v', targetH: random(50,60)},
+    {name: 'Dropdown'   , expand: 'h', split: 'v', targetH: () => random(40,70)},
+    {name: 'RadioButton', expand: 'v', split: 'v', targetH: () => random(30,50), addText: true},
+    {name: 'Textfield'  , expand: 'h', split: 'v', targetH: () => random(40,70)},
+    {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: () => random(30,50), addText: true},
+    {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: () => random(40,70)},
+    {name: 'Button'     , expand: 'a', split: 'v', targetH: () => random(40,70)},
     {name: 'Component'  , expand: 'n', split: 'n',},
     {name: 'Expand'     , expand: 'n', split: 'n',},
   ]
 
+  var index = Math.floor(Number(random(0, elems.length)))
+  return elems[index]
+}
 var buildObject = {
     Picture: (x,y,w,h) => new Picture(x,y,w,h),
     Dropdown: (x,y,w,h) => new Dropdown(x,y,w,h),
@@ -754,11 +759,6 @@ function startup(){
 }
 
 
-function randomElement(){
-  var tmp = JSON.parse(JSON.stringify(elems))
-  var index = Math.floor(Number(random(0, tmp.length)))
-  return tmp[index]
-}
 
 function createObj(obj, x,y,w,h){
   //return new window[obj](x,y,w,h)
@@ -776,7 +776,7 @@ function addObject(object, objs){
 
   if(splitV){
     var availabelHeight = object.h*(currentGridSize-currentGridSpacing/2)
-    var targetHeight = object.targetH
+    var targetHeight = object.targetH()
     
     
     var hSize = targetHeight / availabelHeight
