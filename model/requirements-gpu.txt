@@ -1,6 +1,8 @@
 opencv-python==3.4.2.16
 opencv-contrib-python==3.4.2.16
+git+https://www.github.com/keras-team/keras-contrib.git
 matplotlib
+scipy
 keras
 tensorflow-gpu==1.8
 keras-resnet
