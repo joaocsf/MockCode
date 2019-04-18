@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 import datetime
 import matplotlib.pyplot as plt
 import sys
-from data_loader import DataLoader
+from .data_loader import DataLoader
 import numpy as np
 import os
 import argparse
@@ -215,6 +215,11 @@ class Pix2Pix():
         cnt += 1
     fig.savefig("images/sample/%d_%d.png" % (epoch, batch_i))
     plt.close()
+  
+  def predict_image(self, in_image):
+    images = self.data_loader.convert(in_image)
+    result_image = self.generator.predict(images)
+    return result_image[0]
 
   def load(self):
     path = os.path.join(self.weights_path, 'combined_weights.h5')

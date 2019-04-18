@@ -72,6 +72,13 @@ class DataLoader():
 
             yield imgs_A, imgs_B
 
+    def convert(self, image):
+        image = np.array(image, dtype='float32')
+        image = scipy.misc.imresize(image, self.img_res)
+        images = [image]
+        images = np.array(images)/127.5 - 1.
+        return images
+
     def read_images(self, line):
         pathA, pathB = line.split(' ')
         return self.imread(pathB), self.imread(pathA)
@@ -79,10 +86,9 @@ class DataLoader():
     def imread(self, path):
         return scipy.misc.imread(path, mode='RGB').astype(np.float)
 
-
-
-
 def read_lines(file_path):
+    if file_path is None: return []
+
     lines = []
     with open(file_path,'r') as file:
         lines = file.readlines()

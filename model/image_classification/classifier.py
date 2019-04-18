@@ -1,7 +1,7 @@
 from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate, Conv2D, MaxPooling2D, BatchNormalization
 from keras.optimizers import Adam
-from data_loader import DataLoader
+from .data_loader import DataLoader
 import os
 import datetime
 import numpy as np
@@ -97,6 +97,16 @@ class Classifier():
   def label_to_class(self, label):
     mx = np.argmax(label)
     return self.classes[mx]
+
+  def classify(self, image, boxes):
+    images = self.data.from_image(image, boxes, self.image_shape)
+    predictions = self.model.predict_on_batch(images)
+
+    result = []
+    for index, prediction in enumerate(predictions):
+      label = self.label_to_class(prediction)
+      result.append(label)
+    return result
 
   def evaluate(self, batch_size=10):
     start_time = datetime.datetime.now()

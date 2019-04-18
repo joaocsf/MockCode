@@ -93,12 +93,32 @@ class DataLoader():
       labels.append(self.get_classification(class_id))
     return images, labels
 
+  def from_image(self, image, boxes, image_shape=(128,128)):
+    images = []
+
+    image = image.convert('RGB')
+    for box in boxes:
+      data = box.split(',')
+      data = [int(d) for d in data]
+      x,y,xMax,yMax = data
+      w = xMax-x
+      h = yMax-y
+
+      croped = image.crop((x,y,xMax,yMax))
+      croped = croped.resize((image_shape[0], image_shape[1]), Image.ANTIALIAS)
+      croped = np.array(croped, dtype='float32')
+      croped /= 255.0
+
+      images.append(croped)
+    return np.array(images)
+
   def get_classification(self, class_id):
     res = [0]*len(self.classes)
     res[class_id] = 1.0
     return np.array(res)
 
 def load_lines(file):
+  if file is None: return []
   lines = []
   with open(file, 'r') as f:
     lines = f.readlines()
