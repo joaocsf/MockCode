@@ -7,6 +7,7 @@ import argparse
 import time
 import cv2 as cv
 from pipeline import pipeline as PipeLine
+import json
 
 class MockCode:
   def __init__(self, pipeline):
@@ -35,6 +36,7 @@ class MockCode:
   def image(self, image_path):
     print('Processing Image')
     image = cv.imread(image_path)
+    cv.imshow('Input', image)
     self.__run_pipeline__(image)
   
   def __run_pipeline__(self, image):
@@ -69,24 +71,17 @@ def arg_parse():
   parser.add_argument('-i', '--image')
   parser.add_argument('-o', '--out', default='generated/')
   parser.add_argument('-a', '--alternative')
+  parser.add_argument('-dg', '--debuggen')
   return parser.parse_args()
 
 def nothing(x):
   pass
 
-def main():
-  args = arg_parse()
-  pipeline = PipeLine.Pipeline(args.out)
-
-  if not args.alternative is None:
-    cnn = PipeLine.detection.DetectorCNN(args.alternative)
-    #cnn = PipeLine.detection.DetectorCNN(args.alternative)
-    pipeline.add_detection(cnn)
-  else:
-    yolo = PipeLine.detection.DetectorYOLO()
-    pix2pix = PipeLine.detection.DetectorPix2Pix()
-    pipeline.add_detection(yolo)
-    pipeline.add_detection(pix2pix)
+def setup_dnn_pipeline(pipeline):
+  yolo = PipeLine.detection.DetectorYOLO()
+  pix2pix = PipeLine.detection.DetectorPix2Pix()
+  pipeline.add_detection(yolo)
+  pipeline.add_detection(pix2pix)
 
   merger = PipeLine.result_processing.ProcessorMerger()
   pipeline.add_processing(merger)
@@ -94,12 +89,48 @@ def main():
   html_generator = PipeLine.code_generation.GeneratorHTML()
   pipeline.add_generator(html_generator)
 
+def setup_cnn_pipeline(pipeline, classes_path):
+  cnn = PipeLine.detection.DetectorCNN(classes_path)
+  pipeline.add_detection(cnn)
+
+  merger = PipeLine.result_processing.ProcessorMerger()
+  pipeline.add_processing(merger)
+
+  html_generator = PipeLine.code_generation.GeneratorHTML()
+  pipeline.add_generator(html_generator)
+
+def setup_debug_gen_pipeline(pipeline, annotation_file):
+
+  objs = {}
+  with open(annotation_file, 'r') as file:
+    objs = json.load(file)
+  pipeline.ommit_process('detection', objs)
+
+  merger = PipeLine.result_processing.ProcessorMerger()
+  pipeline.add_processing(merger)
+
+  html_generator = PipeLine.code_generation.GeneratorHTML()
+  pipeline.add_generator(html_generator)
+
+def main():
+  args = arg_parse()
+  pipeline = PipeLine.Pipeline(args.out)
+
+  if not args.debuggen is None:
+    setup_debug_gen_pipeline(pipeline, args.debuggen)
+  elif not args.alternative is None:
+    setup_cnn_pipeline(pipeline, args.alternative)
+  else:
+    setup_dnn_pipeline(pipeline)
+  
   mockcode = MockCode(pipeline)
 
   if args.image == None:
     mockcode.video()
   else:
     mockcode.image(args.image)
+  
+  cv.waitKey(0)
 
 if __name__ == "__main__":
   main()
