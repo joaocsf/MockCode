@@ -11,13 +11,36 @@ from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, Ear
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
+import argparse
+import os
 
+WORK_DIR = os.path.dirname(__file__)
+default_class_path = os.path.join(WORK_DIR, './model_data/classes.txt')
+default_anchors_path = os.path.join(WORK_DIR, './model_data/yolo_anchors.txt')
+default_model_path = os.path.join(WORK_DIR, './model_data/yolo_weights.h5')
+default_log_path = os.path.join(WORK_DIR, './logs/000/')
+default_train_file = os.path.join(WORK_DIR, './train.txt')
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--classes', default=default_class_path)
+    parser.add_argument('-a', '--anchors', default=default_anchors_path)
+    parser.add_argument('-m', '--model', default=default_model_path)
+    parser.add_argument('-l', '--log', default=default_log_path)
+    parser.add_argument('-t', '--trainfile', default=default_train_file)
+
+    return parser.parse_args()
 
 def _main():
-    annotation_path = 'train.txt'
-    log_dir = 'logs/000/'
-    classes_path = 'model_data/classes.txt'
-    anchors_path = 'model_data/yolo_anchors.txt'
+    args = parse_arguments()
+    #annotation_path = 'train.txt'
+    annotation_path = args.trainfile
+    #log_dir = 'logs/000/'
+    log_dir = args.log
+    #classes_path = 'model_data/classes.txt'
+    classes_path = args.classes
+    #anchors_path = 'model_data/yolo_anchors.txt'
+    anchors_path = args.anchors
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
@@ -30,7 +53,7 @@ def _main():
             freeze_body=2, weights_path='model_data/tiny_yolo_weights.h5')
     else:
         model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path='model_data/yolo_weights.h5') # make sure you know what you freeze
+            freeze_body=2, weights_path=args.model) # make sure you know what you freeze
 
     logging = TensorBoard(log_dir=log_dir)
     checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',

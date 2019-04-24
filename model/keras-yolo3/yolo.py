@@ -18,11 +18,17 @@ from yolo3.utils import letterbox_image
 import os
 from keras.utils import multi_gpu_model
 
+WORK_DIR = os.path.dirname(__file__)
+
+default_model_path = os.path.join(WORK_DIR, './model_data/yolo.h5')
+default_anchor_path = os.path.join(WORK_DIR, './model_data/yolo_anchors.txt')
+default_classes_path = os.path.join(WORK_DIR, './model_data/classes.txt')
+
 class YOLO(object):
     _defaults = {
-        "model_path": 'model_data/yolo.h5',
-        "anchors_path": 'model_data/yolo_anchors.txt',
-        "classes_path": 'model_data/classes.txt',
+        "model_path": default_model_path,
+        "anchors_path": default_anchor_path,
+        "classes_path": default_classes_path,
         "score" : 0.3,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
