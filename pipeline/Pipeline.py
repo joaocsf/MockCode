@@ -12,6 +12,7 @@ class Pipeline():
     self.processors = []
     self.generators = []
     self.detection_results = []
+    self.ommit = {}
 
   def add_detection(self, detection):
     assert isinstance(detection, Detector)
@@ -46,19 +47,21 @@ class Pipeline():
     total = len(self.processors)    
 
     for i, generator in enumerate(self.generators):
-      elements = generator.process(elements, self.out_folder)
+      generator.process(elements, self.out_folder)
       progress((i+1)/float(total), prefix='Generating', suffix='{0}/{1}'.format(i+1,total))
   
   def show_generator_results(self):
     for generator in self.generators:
       generator.show()
   
+  def ommit_process(self, process, objects):
+    self.ommit[process] = objects
+
   def debug(self,tag, image, elements):
     image2 = image.copy()
     print('\nElement Count', len(elements))
 
     print([element['class'] for element in elements])
-    print
 
     print(len([element['class'] for element in elements if element['class']=='Container']))
 
@@ -75,12 +78,18 @@ class Pipeline():
 
 
   def execute(self, image):
-    res = self.execute_detection(image)
-    self.debug('Before', image, res)
+    res = []
+
+    if self.ommit.__contains__('detection'):
+      res = self.ommit['detection']
+    else:
+      res = self.execute_detection(image)
+    #self.debug('Before', image, res)
     print('')
     res = self.execute_processors(res)
     print('')
-    self.debug('After', image, res)
+    #self.debug('After', image, res)
+    print('####RESSS#####', res)
     self.execute_code_generators(res)
     print('Finished!')
     cv.waitKey(0)
