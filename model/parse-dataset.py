@@ -116,9 +116,11 @@ def processFile(file):
       toImage = os.path.relpath(imagePath, outputDir)
       toImageBoxes = os.path.relpath(imageBoxesPath, outputDir)
 
-    entries.append(toImage + " " + ' '.join(normalBoxes))
-    if(saveMask):
+    if not saveMask:
+      entries.append(toImage + " " + ' '.join(normalBoxes))
+    else:
       entries.append(toImageBoxes + " " + ' '.join(containerBoxes))
+
   else:
     toImage = imagePath
     toImageBoxes = imageBoxesPath
