@@ -64,9 +64,9 @@ function randomElement(){
   var elems = [
     {name: 'Picture'    , expand: 'a', split: 'n' },
     {name: 'Dropdown'   , expand: 'h', split: 'v', targetH: () => random(40,70)},
-    {name: 'RadioButton', expand: 'v', split: 'v', targetH: () => random(30,50), addText: true},
+    {name: 'RadioButton', expand: 'v', split: 'v', targetH: () => random(40,50), addText: true},
     {name: 'Textfield'  , expand: 'h', split: 'v', targetH: () => random(40,70)},
-    {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: () => random(30,50), addText: true},
+    {name: 'Checkbox'   , expand: 'v', split: 'v', targetH: () => random(40,50), addText: true},
     {name: 'TextBlock'  , expand: 'a', split: 'v', targetH: () => random(40,70)},
     {name: 'Button'     , expand: 'a', split: 'v', targetH: () => random(40,70)},
     {name: 'Component'  , expand: 'n', split: 'n',},
@@ -308,7 +308,7 @@ class Checkbox extends Drawable
       [points[3], points[0]],
     )
 
-    if(randomize && Math.random() > 0.5){
+    if(randomize){
       
       var left = p_mult(p_sum(points[0], points[3]), 1/2)
       var mid = p_mult(p_sum(points[0], points[2]), 1/2)
@@ -489,11 +489,11 @@ class TextBlock extends Drawable
         var rand = [-0.1, -0.1]
         if(i == 0){
           rand[0] =0
-          rand[1] =1
+          rand[1] =0.25
         }
         
         if(i == nPoints-1){
-          rand[0] =-1
+          rand[0] =-0.25
           rand[1] =0
         }
 

@@ -29,7 +29,7 @@ for(var i = 0; i < numFiles; i++){
 
   generateMockup(dir, text, index)
   index++
-  text=!text
+  //text=!text 
   progressbar((i+1)/ numFiles, 50, "Generating", formatDate(toFinish)+ "  Mock"+index)
 }
 
