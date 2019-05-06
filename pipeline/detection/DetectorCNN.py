@@ -134,10 +134,17 @@ def segment(image):
     )
 
     x,y,w,h = cv.boundingRect(contour)
+    print('Size', (x,y,w,h))
     #childs_of_childs = len(childs[0]['childs']) if n_childs
-    if n_childs == 1 and len(childs[0]['childs']) > 1: 
-      containers.append(get_element('Container',x,y,w,h))
-    else:
+    is_container = False
+    if n_childs >= 1:
+      for c in childs:
+        if len(c['childs']) > 1:
+          containers.append(get_element('Container',x,y,w,h))
+          is_container = True
+          break
+
+    if not is_container:
       elements.append(get_element('',x,y,w,h))
 
     hull = contour #cv.convexHull(contour, False)
