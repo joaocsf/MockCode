@@ -224,7 +224,7 @@ class Pix2Pix():
   def load(self):
     path = os.path.join(self.weights_path, 'combined_weights.h5')
     if not os.path.isfile(path): return
-    print('Loading Weights...', flush=True)
+    print('[Pix2Pix] Loading Weights {}'.format(path), flush=True)
     
     self.load_weights(self.discriminator, 'discriminator')
     self.load_weights(self.generator, 'generator')
@@ -253,7 +253,7 @@ def arguments():
   return parser.parse_args()
 
 
-if __name__ == '__main__':
-  args = arguments()
-  gan = Pix2Pix(args.train, args.validation)
-  gan.train(epochs=200, batch_size=2, sample_interval=200)
+#if __name__ == '__main__':
+  #args = arguments()
+  #gan = Pix2Pix(args.train, args.validation)
+  #gan.train(epochs=200, batch_size=2, sample_interval=200)

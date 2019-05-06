@@ -12,7 +12,7 @@ class DataLoader():
 
         self.validation_lines = read_lines(self.validation_file)
         self.train_lines = read_lines(self.train_file)
-        print('Train:', len(self.train_lines), 'Validation:', len(self.validation_lines))
+        #print('Train:', len(self.train_lines), 'Validation:', len(self.validation_lines))
 
     def load_data(self, batch_size=1, is_testing=False):
         batch = self.train_lines if not is_testing else self.validation_lines
