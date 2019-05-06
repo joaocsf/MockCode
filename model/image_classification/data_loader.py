@@ -2,8 +2,6 @@ import os
 import numpy as np
 from PIL import Image
 
-
-
 class DataLoader():
 
   def __init__(self, trainfile, validationfile, classes):
@@ -93,16 +91,23 @@ class DataLoader():
       labels.append(self.get_classification(class_id))
     return images, labels
 
+
+
   def from_image(self, image, boxes, image_shape=(128,128)):
     images = []
 
     image = image.convert('RGB')
+    image_width, image_height = image.size
     for box in boxes:
       data = box.split(',')
       data = [int(d) for d in data]
       x,y,xMax,yMax = data
       w = xMax-x
       h = yMax-y
+      x = clamp(x-10, 0, image_width)
+      y = clamp(y-10, 0, image_height)
+      xMax = clamp(xMax + 10, 0, image_width)
+      yMax = clamp(yMax + 10, 0, image_height)
 
       croped = image.crop((x,y,xMax,yMax))
       croped = croped.resize((image_shape[0], image_shape[1]), Image.ANTIALIAS)
@@ -123,3 +128,6 @@ def load_lines(file):
   with open(file, 'r') as f:
     lines = f.readlines()
   return [line.replace('\n', '') for line in lines]
+
+def clamp(value, min_val, max_val):
+  return max(min(value, max_val), min_val)

@@ -8,6 +8,7 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
+import pickle
 
 WORKING_DIR = os.path.dirname(__file__)
 
@@ -16,6 +17,9 @@ class Classifier():
   def __init__(self, trainfile, testfile, classesfile, image_shape=(128,128,3)):
     self.classes = load_classes(classesfile) 
     self.image_shape = image_shape
+
+    self.output_history=os.path.join(WORKING_DIR, '/results/history/')
+    os.makedirs(self.output_history, exist_ok=True)
 
     self.data = DataLoader(trainfile, testfile, self.classes)
 
@@ -65,22 +69,25 @@ class Classifier():
     
     start_time = datetime.datetime.now()
     for epoch in range(epochs):
-      
-      for batch, (images, labels) in enumerate(self.data.yield_batch(batch_size, self.image_shape)):
+      d_loss = []
+      d_v_loss = []
+      d_acc = []
+      d_v_acc = []
+      for batch, (images, labels) in enumerate(self.data.yield_batch2(batch_size, self.image_shape)):
 
-        t_images, t_labels = self.data.load_batch(batch_size, self.image_shape, validation_phase=True)
         train_data = self.model.train_on_batch(images, labels)
+        d_loss += [train_data[0]]
+        d_acc += [train_data[1]]
+
+        (t_images, t_labels) = self.data.load_batch(10, self.image_shape, validation_phase=True)
         test_data = self.model.test_on_batch(t_images, t_labels)
+        d_v_loss += [test_data[0]]
+        d_v_acc += [test_data[1]]
 
-        self.history['loss'] += [train_data[0]]
-        self.history['val_loss'] += [test_data[0]]
-        self.history['acc'] += [train_data[1]]
-        self.history['val_acc'] += [test_data[1]]
-
-        acc = np.mean(self.history['acc'])
-        val_acc = np.mean(self.history['val_acc'])
-        loss = np.mean(self.history['loss'])
-        val_loss = np.mean(self.history['val_loss'])
+        acc = np.mean(d_acc)
+        val_acc = np.mean(d_v_acc)
+        loss = np.mean(d_loss)
+        val_loss = np.mean(d_v_loss)
         _curr_batch = batch/float(self.data.n_batches)
         _curr_epoch = epoch/float(epochs)
         _curr = _curr_epoch + _curr_batch * 1.0/epochs
@@ -90,10 +97,38 @@ class Classifier():
         print_progressbar(_curr, 
           prefix='[Epoch {0}/{1}][Batch {2}/{3}]'.format(epoch, epochs, batch, self.data.n_batches), 
           suffix='[Accuracy: {1:0.2f} | Val: {2:0.2f}] [Loss:{3:.3f} | Val: {4:.3f}] {0}'.format(remain_time, acc*100, val_acc*100, loss, val_loss))
+
+        self.history['loss'] += [np.mean(d_loss)]
+        self.history['val_loss'] += [np.mean(d_v_loss)]
+        self.history['acc'] += [np.mean(d_acc)]
+        self.history['val_acc'] += [np.mean(d_v_acc)]
+
+
         
-        if batch % save_freq == 0:
-          self.save(epoch, batch, acc, val_acc, loss, val_loss)
+        #if batch % save_freq == 0:
+          #self.save(epoch, batch, acc, val_acc, loss, val_loss)
+
+      # self.history['loss'] += [np.mean(d_loss)]
+      # self.history['val_loss'] += [np.mean(d_v_loss)]
+      # self.history['acc'] += [np.mean(d_acc)]
+      # self.history['val_acc'] += [np.mean(d_v_acc)]
+
+
+    
+    self.store_history()
+    plot_history_charts('Loss', self.history['loss'], self.history['val_loss'])
+    plot_history_charts('Accuracy', self.history['acc'], self.history['val_acc'])
   
+  def store_history(self):
+    history_file = os.path.join(self.output_history, 'history.pkl')
+    with open(history_file, 'wb') as f: 
+      pickle.dump(self.history, f)
+
+  def load_history(self):
+    history_file = os.path.join(self.output_history, 'history.pkl')
+    with open(history_file, 'rb') as f: 
+      self.history = pickle.load(f)
+
   def label_to_class(self, label):
     mx = np.argmax(label)
     return self.classes[mx]
@@ -173,6 +208,13 @@ def arguments():
 
   return parser.parse_args()
 
+def plot_history_charts(title, data, val_data):
+  l1, = plt.plot(data, label='Train')
+  l2, = plt.plot(val_data, label="Validation")
+  plt.ylabel(title)
+  plt.legend(handles=[l1, l2])
+  plt.show()
+
 def plot_confusion_matrix(labels, predicted, classes, normalized=True):
   cm = confusion_matrix(labels, predicted, classes)
   fig, ax = plt.subplots()
@@ -206,6 +248,6 @@ if __name__ == "__main__":
   args = arguments()
   classifier = Classifier(args.train, args.validation, args.classes)
   if args.evaluate < 1:
-    classifier.train(50,10, save_freq=10)
+    classifier.train(1,1, save_freq=10)
   else:
     classifier.evaluate()
