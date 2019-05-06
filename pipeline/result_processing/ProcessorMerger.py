@@ -8,14 +8,24 @@ class ProcessorMerger(Processor):
     containers = [x for x in result if x['class'] == 'Container']
     objects = [x for x in result if not x['class'] == 'Container']
 
+    for container in containers:
+      container['user'] = True
+
     for obj in objects:
       added = False 
-      for container in containers:
-        if self.inside(obj, container) > 0.8:
-          container['childs'] = [] if not container.__contains__('childs') else container['childs']
-          container['childs'].append(obj)
-          added = True
-          break
+      for container in containers[::]:
+        percentage = self.inside(obj, container)
+
+        if percentage > 0.5:
+
+          if obj['w']*obj['h'] > container['w']*container['h']:
+            containers.remove(container)
+
+          else:
+            container['childs'] = [] if not container.__contains__('childs') else container['childs']
+            container['childs'].append(obj)
+            added = True
+            break
       
       if not added:
         document.append(obj)
@@ -23,8 +33,28 @@ class ProcessorMerger(Processor):
     for c in containers:
       document.append(c)
     
-    return document
+    return [self.get_root_object(document)]
 
+  def get_root_object(self, objs):
+
+    minX = min(objs, key=lambda o: o['x'])
+    minX = minX['x']
+    minY = min(objs, key=lambda o: o['y'])
+    minY = minY['y']
+    maxW = max(objs, key=lambda o: o['x']+o['w'])
+    maxW = maxW['x']+maxW['w']
+    maxH = max(objs, key=lambda o: o['y']+o['h'])
+    maxH = maxH['y']+maxH['h']
+
+    root = {
+        'class': 'Container',
+        'x':minX,
+        'y':minY,
+        'w': maxW - minX,
+        'h': maxH - minY,
+        'childs': objs
+      }
+    return root
 
   def inside(self, obj, container):
     x1m = obj['x']
