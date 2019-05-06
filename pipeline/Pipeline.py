@@ -3,6 +3,7 @@ from .result_processing import Processor
 from .code_generation import Generator
 import os
 import cv2 as cv
+import time
 
 class Pipeline():
 
@@ -13,7 +14,11 @@ class Pipeline():
     self.generators = []
     self.detection_results = []
     self.ommit = {}
-
+    self.stats = {
+      'DETECTION': [],
+      'PROCESSING': [],
+      'GENERATION': [],
+    }
   def add_detection(self, detection):
     assert isinstance(detection, Detector)
     self.detectors.append(detection)
@@ -44,7 +49,7 @@ class Pipeline():
     return elements
 
   def execute_code_generators(self, elements):
-    total = len(self.processors)    
+    total = len(self.generators)    
 
     for i, generator in enumerate(self.generators):
       generator.process(elements, self.out_folder)
@@ -57,44 +62,63 @@ class Pipeline():
   def ommit_process(self, process, objects):
     self.ommit[process] = objects
 
-  def debug(self,tag, image, elements):
-    image2 = image.copy()
-    print('\nElement Count', len(elements))
+  def log_time(self, process, start_time):
+    end = time.time()
+    elapsed = end-start_time
+    self.stats[process].append(elapsed)
 
-    print([element['class'] for element in elements])
-
-    print(len([element['class'] for element in elements if element['class']=='Container']))
-
+  def debug_aux(self, image, elements, deep=0):
     for element in elements:
       pt1 = (int(element['x']), int(element['y']))
       pt2 = (int(element['w'] + pt1[0]), int(element['h'] + pt1[1]))
       color = (0,0,255)
       if element['class'] == 'Container':
-        print(element)
-        color = (0,255,0)
-      cv.rectangle(image2, pt1, pt2, color, 5)
+        color = (255*(1-deep/5.0),255*deep/5.0,0)
+        if element.__contains__('childs'):
+          self.debug_aux(image, element['childs'], deep+1)
+      cv.rectangle(image, pt1, pt2, color, 5)
 
+
+
+  def debug(self,tag, image, elements):
+    image2 = image.copy()
+    self.debug_aux(image2, elements)
     cv.imshow(tag, image2)
+    cv.waitKey(1)
 
+  def log_stats(self):
+    print('Statistics:', flush=True)
+    for stat in self.stats:
+      mean = sum(self.stats[stat])/len(self.stats[stat])
+      log = '\t{0}: {1:0.3f}'.format(stat, mean)
+      print(log, flush=True)
 
   def execute(self, image):
     res = []
 
+    start = time.time()
     if self.ommit.__contains__('detection'):
       res = self.ommit['detection']
     else:
       res = self.execute_detection(image)
-    #self.debug('Before', image, res)
+    self.log_time('DETECTION', start)
+    self.debug('Before', image, res)
     print('')
-    res = self.execute_processors(res)
-    print('')
-    #self.debug('After', image, res)
-    print('####RESSS#####', res)
-    self.execute_code_generators(res)
-    print('Finished!')
-    cv.waitKey(0)
 
-def progress(percentage, width=50, prefix='', suffix='', fill='#', empty='-'):
+    start = time.time()
+    res = self.execute_processors(res)
+    self.log_time('PROCESSING', start)
+    self.debug('After', image, res)
+    print('')
+
+    start = time.time()
+    self.execute_code_generators(res)
+    self.log_time('GENERATION', start)
+    print('Finished Processing Pipeline')
+
+    self.log_stats()
+
+def progress(percentage, width=50, prefix='', suffix='', fill='\033[92m#\033[0m', empty='-'):
   n_fill = int(width*percentage)
   t_fill = width-n_fill
   p = fill*n_fill + empty*t_fill
