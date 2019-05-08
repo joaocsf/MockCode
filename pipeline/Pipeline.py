@@ -114,7 +114,7 @@ class Pipeline():
     start = time.time()
     self.execute_code_generators(res)
     self.log_time('GENERATION', start)
-    print('Finished Processing Pipeline')
+    print('\nFinished Processing Pipeline')
 
     self.log_stats()
 
