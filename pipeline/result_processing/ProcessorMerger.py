@@ -20,6 +20,7 @@ class ProcessorMerger(Processor):
 
           if obj['w']*obj['h'] > container['w']*container['h']:
             containers.remove(container)
+            continue
 
           else:
             container['childs'] = [] if not container.__contains__('childs') else container['childs']
@@ -31,6 +32,8 @@ class ProcessorMerger(Processor):
         document.append(obj)
 
     for c in containers:
+      if not c.__contains__('childs') or len(c['childs']) == 0:
+        continue
       document.append(c)
     
     return [self.get_root_object(document)]
