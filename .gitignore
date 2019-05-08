@@ -5,3 +5,4 @@ generator/*.html
 generator/*.json
 generated/
 *.h5
+.vscode/
