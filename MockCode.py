@@ -50,19 +50,22 @@ class MockCode:
     cv.createTrackbar('weight', 'Image', 10, 50, nothing) 
     cv.createTrackbar('kernel_e', 'Image', 1, 3, nothing) 
   
-  def video(self):
+  def video(self, camera):
     print('Processing Video')
-    cam = cv.VideoCapture(0)
+    cam = cv.VideoCapture(camera)
     cv.setWindowProperty('Image', cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
     cv.setWindowProperty('Image', cv.WND_PROP_FULLSCREEN, cv.WINDOW_NORMAL)
     cv.waitKey(1)
 
     while True:
       _, img = cam.read()
-      key = cv.waitKey(20)
+      key = cv.waitKey(1)
       img = self.adapt_image(img)
       cv.imshow('Image', img)
-
+      if key == 114:
+        print('Restarting Video Stream')
+        cam.release()
+        cam = cv.VideoCapture(camera)
       if key == 27:
         break
       elif key == 32:
@@ -77,7 +80,7 @@ class MockCode:
   def image(self, image_path):
     print(PROCESSING_IMAGE, flush=True)
     image = cv.imread(image_path)
-    cv.imshow('Input', image)
+    #cv.imshow('Input', image)
     cv.waitKey(1)
     image = self.adapt_image(image)
     print(Processing)
@@ -143,13 +146,13 @@ class MockCode:
 
     corped, rot = self.corp_image(thresh, rect)
 
-    cv.imshow('Thresh2', thresh2)
-    if np.sum(corped.shape) == 0:
+    #cv.imshow('Thresh2', thresh2)
+    if corped is None or np.sum(corped.shape) == 0:
       return thresh_color
 
     corped = cv.cvtColor(corped, cv.COLOR_GRAY2BGR)
-    cv.imshow('Corped', corped)
-    return corped
+    # cv.imshow('Corped', corped)
+    return thresh_color
 
 def arg_parse():
   parser = argparse.ArgumentParser('')
@@ -157,6 +160,7 @@ def arg_parse():
   parser.add_argument('-o', '--out', default='generated/')
   parser.add_argument('-a', '--alternative')
   parser.add_argument('-dg', '--debuggen')
+  parser.add_argument('-c', '--camera', default=0)
   return parser.parse_args()
 
 def nothing(x):
@@ -240,12 +244,12 @@ def main():
   mockcode = MockCode(pipeline)
 
   if args.image == None:
-    mockcode.video()
+    mockcode.video(args.camera)
   else:
     mockcode.image(args.image)
 
   #cv.waitKey(0)
-  input('...')  
+  #input('...')  
 
 if __name__ == "__main__":
   main()
