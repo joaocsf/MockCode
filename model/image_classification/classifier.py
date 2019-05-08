@@ -18,7 +18,7 @@ class Classifier():
     self.classes = load_classes(classesfile) 
     self.image_shape = image_shape
 
-    self.output_history=os.path.join(WORKING_DIR, '/results/history/')
+    self.output_history=os.path.join(WORKING_DIR, './results/history/')
     os.makedirs(self.output_history, exist_ok=True)
 
     self.data = DataLoader(trainfile, testfile, self.classes)
