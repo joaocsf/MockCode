@@ -14,11 +14,6 @@ class Pipeline():
     self.generators = []
     self.detection_results = []
     self.ommit = {}
-    self.stats = {
-      'DETECTION': [],
-      'PROCESSING': [],
-      'GENERATION': [],
-    }
   def add_detection(self, detection):
     assert isinstance(detection, Detector)
     self.detectors.append(detection)
@@ -62,11 +57,6 @@ class Pipeline():
   def ommit_process(self, process, objects):
     self.ommit[process] = objects
 
-  def log_time(self, process, start_time):
-    end = time.time()
-    elapsed = end-start_time
-    self.stats[process].append(elapsed)
-
   def debug_aux(self, image, elements, deep=0):
     for element in elements:
       pt1 = (int(element['x']), int(element['y']))
@@ -78,42 +68,54 @@ class Pipeline():
           self.debug_aux(image, element['childs'], deep+1)
       cv.rectangle(image, pt1, pt2, color, 5)
 
-
-
   def debug(self,tag, image, elements):
     image2 = image.copy()
     self.debug_aux(image2, elements)
     cv.imshow(tag, image2)
     cv.waitKey(1)
 
+  def log_substats(self, lst, label):
+    sub_stats_str = ''
+    total_time = 0
+
+    for item in lst:
+      times = item.get_times()
+      times_mean = sum(times)/len(times)
+      name = type(item).__name__
+      sub_stats_str += ('\t\t{0:>19}: {1:<12}\n'.format(name, self.colored_number(times_mean)))
+      total_time += times_mean
+    print('\t{0}: \t{1}\n{2}'.format(label, self.colored_number(total_time), sub_stats_str))
+    return total_time
+  
+  def colored_number(self, content):
+    return '\033[92m{0:.4f}s\033[0m'.format(content)
+
   def log_stats(self):
     print('Statistics:', flush=True)
-    for stat in self.stats:
-      mean = sum(self.stats[stat])/len(self.stats[stat])
-      log = '\t{0}: {1:0.3f}'.format(stat, mean)
-      print(log, flush=True)
+    total = 0
+
+    total += self.log_substats(self.detectors, 'Detection')
+    total += self.log_substats(self.processors, 'Processing')
+    total += self.log_substats(self.generators, 'Generation')
+
+    print('Total: {0}'.format(self.colored_number(total)), flush=True)
+
 
   def execute(self, image):
     res = []
 
-    start = time.time()
     if self.ommit.__contains__('detection'):
       res = self.ommit['detection']
     else:
       res = self.execute_detection(image)
-    self.log_time('DETECTION', start)
     self.debug('Before', image, res)
     print('')
 
-    start = time.time()
     res = self.execute_processors(res)
-    self.log_time('PROCESSING', start)
     self.debug('After', image, res)
     print('')
 
-    start = time.time()
     self.execute_code_generators(res)
-    self.log_time('GENERATION', start)
     print('\nFinished Processing Pipeline')
 
     self.log_stats()

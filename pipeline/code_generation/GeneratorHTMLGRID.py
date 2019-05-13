@@ -8,6 +8,7 @@ WORK_DIR = os.path.dirname(__file__)
 class GeneratorHTMLGRID(Generator):
   def __init__(self, inputjs = None, inputcss = None, templatehtml = None):
     
+    super().__init__()
     self.js_file = inputjs if not inputjs is None else os.path.join(WORK_DIR, './template/main.js')
     self.css_file = inputcss if not inputcss is None else os.path.join(WORK_DIR, './template/style.css')
     self.html_file = templatehtml if not templatehtml is None else os.path.join(WORK_DIR, './template/template.html')
@@ -16,7 +17,7 @@ class GeneratorHTMLGRID(Generator):
       'Component', 'Expand'
     ]
 
-  def process(self, elements, out_folder):
+  def on_process(self, elements, out_folder):
     out_folder = os.path.join(out_folder, 'html_generator_out/')
     os.makedirs(os.path.dirname(out_folder), exist_ok=True)
     #print('#######ELEMENTS', elements)

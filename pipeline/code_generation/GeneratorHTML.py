@@ -4,11 +4,12 @@ import webbrowser
 
 class GeneratorHTML(Generator):
   def __init__(self):
+    super().__init__()
     self.ignoreList = [
       'Component', 'Expand'
     ]
 
-  def process(self, elements, out_folder):
+  def on_process(self, elements, out_folder):
     self.out_file = os.path.join(out_folder, 'html_generator_out/index.html')
     os.makedirs(os.path.dirname(self.out_file), exist_ok=True)
     generate_code(elements, self.out_file)

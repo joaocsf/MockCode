@@ -5,7 +5,7 @@ import json
 class ProcessorSelector(Processor):
   
 
-  def process(self, root):
+  def on_process(self, root):
     container = root[0]
 
     self.process_container(container)

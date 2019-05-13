@@ -12,12 +12,13 @@ WORK_DIR = os.path.dirname(__file__)
 class DetectorCNN(Detector):
 
   def __init__(self, classes_file):
+    super().__init__()
     self.classifier = Classifier(None, None, classes_file)
   
   def on_destroy(self):
     pass
   
-  def detect(self, image):
+  def on_detect(self, image):
     
     elements, containers = segment(image)
 

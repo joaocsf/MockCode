@@ -34,7 +34,7 @@ class DetectorYOLO(Detector):
 
     #os.chdir(self.work_path)
   
-  def detect(self, image):
+  def on_detect(self, image):
     #os.chdir(self.yolo_path)
 
     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)

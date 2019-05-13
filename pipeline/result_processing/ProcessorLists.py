@@ -4,9 +4,10 @@ import json
 
 class ProcessorLists(Processor):
   def __init__(self, orientation='v'):
+    super().__init__()
     self.orientation = orientation
 
-  def process(self, root):
+  def on_process(self, root):
     container = root[0]
     self.orientation
     self.process_container(container)

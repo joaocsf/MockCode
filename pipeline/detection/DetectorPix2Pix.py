@@ -28,7 +28,7 @@ class DetectorPix2Pix(Detector):
     image = Image.fromarray(result)
     return image
 
-  def detect(self, image):
+  def on_detect(self, image):
     img_original_h, img_original_w = image.shape[:2]
     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     image = Image.fromarray(image)

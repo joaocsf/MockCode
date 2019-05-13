@@ -3,7 +3,7 @@ import os
 import json
 
 class ProcessorMerger(Processor):
-  def process(self, result):
+  def on_process(self, result):
     document = []
     containers = [x for x in result if x['class'] == 'Container']
     objects = [x for x in result if not x['class'] == 'Container']
