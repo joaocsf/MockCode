@@ -13,7 +13,7 @@ from pipeline import pipeline as PipeLine
 import json
 import numpy as np
 
-BANNER=""""
+BANNER="""
 
 -----------------=========================================-----------------
 
