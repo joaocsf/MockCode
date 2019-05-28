@@ -47,11 +47,16 @@ class DataLoader():
     def load_batch(self, batch_size=1, is_testing=False):
         batch_images = self.train_lines if not is_testing else self.validation_lines
         np.random.shuffle(batch_images)
-        self.n_batches = int(len(batch_images) / batch_size)
+        n_batches = int(len(batch_images) / batch_size)
 
-        print('BatchSize{1}: Batches: {0}'.format(self.n_batches, batch_size), flush=True)
+        if(is_testing):
+            self.n_val_batches = n_batches
+        else:
+            self.n_batches = n_batches
 
-        for i in range(self.n_batches-1):
+        print('BatchSize{1}: Batches: {0}'.format(n_batches, batch_size), flush=True)
+
+        for i in range(n_batches-1):
             batch = batch_images[i*batch_size:(i+1)*batch_size]
             imgs_A, imgs_B = [], []
             for imgs in batch:
