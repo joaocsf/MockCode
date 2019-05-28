@@ -13,6 +13,7 @@ from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_l
 from yolo3.utils import get_random_data
 import argparse
 import os
+import pickle
 
 WORK_DIR = os.path.dirname(__file__)
 default_class_path = os.path.join(WORK_DIR, './model_data/classes.txt')
@@ -20,6 +21,7 @@ default_anchors_path = os.path.join(WORK_DIR, './model_data/yolo_anchors.txt')
 default_model_path = os.path.join(WORK_DIR, './model_data/yolo_weights.h5')
 default_log_path = os.path.join(WORK_DIR, './logs/000/')
 default_train_file = os.path.join(WORK_DIR, './train.txt')
+default_history_path = os.path.join(WORK_DIR, './history')
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -28,11 +30,23 @@ def parse_arguments():
     parser.add_argument('-m', '--model', default=default_model_path)
     parser.add_argument('-l', '--log', default=default_log_path)
     parser.add_argument('-t', '--trainfile', default=default_train_file)
+    parser.add_argument('-hist', '--history', default=default_history_path)
 
     return parser.parse_args()
 
+def _join_history(historyA, historyB):
+    if len(historyB.keys()) == 0:
+        return historyA
+
+    res = {}
+    for key in historyA.keys():
+        res[key] = historyA[key] + historyB[key]
+    return res
+
+
 def _main():
     args = parse_arguments()
+    history_path = args.history
     #annotation_path = 'train.txt'
     annotation_path = args.trainfile
     #log_dir = 'logs/000/'
@@ -70,10 +84,11 @@ def _main():
     num_val = int(len(lines)*val_split)
     num_train = len(lines) - num_val
 
-    epochs1 = 25
-    epochs2 = 25
+    epochs1 = 2
+    epochs2 = 0
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
+    history = {'val_loss': [], 'loss': []}
     if True:
         model.compile(optimizer=Adam(lr=1e-3), loss={
             # use custom yolo_loss Lambda layer.
@@ -81,7 +96,7 @@ def _main():
 
         batch_size = 16
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        fit_history = model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=max(1, num_train//batch_size),
                 validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
@@ -89,6 +104,7 @@ def _main():
                 initial_epoch=0,
                 callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
+        history = _join_history(history, fit_history.history)
 
     # Unfreeze and continue training, to fine-tune.
     # Train longer if the result is not good.
@@ -100,7 +116,7 @@ def _main():
 
         batch_size = 2 # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        fit_history = model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
@@ -108,9 +124,16 @@ def _main():
             initial_epoch=epochs1,
             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
+        history = _join_history(history, fit_history.history)
 
+    save_history(history_path, history)
     # Further training if needed.
 
+def save_history(path, history):
+    os.makedirs(path, exist_ok=True)
+    history_file = os.path.join(path, 'history.pkl')
+    with open(history_file, 'wb') as f: 
+      pickle.dump(history, f)
 
 def get_classes(classes_path):
     '''loads the classes'''
