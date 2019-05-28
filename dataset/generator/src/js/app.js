@@ -2,9 +2,12 @@
 document.addEventListener("DOMContentLoaded", startup)
 
 module.exports = {
-  generate_image(canvass, roughCanvas, text, boxes){
+  generate_image(canvass, roughCanvas, text, boxes, labels, debug, bw){
+    onlyLabels = labels
     onlyBoxes = boxes
+    blackNwhite = bw
     useText = text
+    drawBox=debug
     canvas = canvass
     canvas.width=width
     canvas.height=height
@@ -16,9 +19,12 @@ module.exports = {
     return lastObjs
   },
 
-  regenerate_image(canvass, roughCanvas, text, boxes, lastObjss){
+  regenerate_image(canvass, roughCanvas, text, boxes, labels, debug, bw, lastObjss){
+    blackNwhite = bw
+    onlyLabels = labels
     onlyBoxes = boxes
     useText = text
+    drawBox = debug
     lastObjs = lastObjss
     style.stroke = onlyBoxes? 'white':'black'
     canvas = canvass
@@ -26,7 +32,6 @@ module.exports = {
     rc = roughCanvas.canvas(canvas)
     clear()
     redraw()
- 
   },
 
   generateJSON(objects){
@@ -53,6 +58,8 @@ var context = undefined
 var canvas = undefined
 var lastObjs = []
 var onlyBoxes = false
+var onlyLabels = false
+var blackNwhite = false
 
 var fileName = "mock"
 var fileIndex = 0
@@ -136,7 +143,14 @@ class Drawable {
   drawBox(rc){
     var dims = this.getBoxDims()
     var color = this.color || 'green'
+
+    if (blackNwhite){
+      color = 'grey'
+    }
+
     rc.rectangle(dims[0], dims[1],dims[2],dims[3],{stroke:color, roughness:0, strokeWidth:5})
+    if (onlyLabels)
+      drawText(this.name, this.min, this.max, 'px Arial', false)
   }
 
   onDraw(rc){
@@ -147,9 +161,10 @@ class Drawable {
   }
 
   draw(rc){
+    if(!onlyLabels || this.constructor.name == 'Container')
     this.onDraw(rc)
 
-    if(drawBox)
+    if(drawBox || onlyLabels)
       this.drawBox(rc)
   }
 
@@ -165,6 +180,7 @@ class Component extends Drawable
 {
   generate()
   {
+    this.name = 'Comp'
     this.color = 'black'
     var points = rectPoints(this.x, this.y, this.w, this.h)
     this.w*=random(0.5,1.0)
@@ -203,6 +219,7 @@ class Expand extends Drawable
 {
   generate()
   {
+    this.name = 'Exp'
     this.color = 'red'
     this.w*=random(0.3,1.0)
     this.h*=random(0.3,1.0)
@@ -242,6 +259,7 @@ class Container extends Drawable
 {
   generate()
   {
+    this.name = 'Container'
     this.color = 'black'
     var points = rectPoints(this.x, this.y, this.w, this.h)
 
@@ -259,6 +277,11 @@ class Container extends Drawable
   }
 
   onDraw(rc){
+    if(onlyLabels){
+      var dims = this.getBoxDims();
+      rc.rectangle(dims[0], dims[1],dims[2],dims[3],{stroke:'black', roughness:0, strokeWidth:5})
+      return
+    }
     var stl = JSON.parse(JSON.stringify(style))
     stl.stroke='black'
     for(var i in this.lines){
@@ -279,6 +302,7 @@ class Checkbox extends Drawable
 {
   generate()
   {
+    this.name = 'C'
     this.color = '#006064'
     var min = Math.min(this.w, this.h)
     this.w = Math.random()*0.5+0.5
@@ -340,6 +364,7 @@ class Button extends Drawable
 {
   generate() 
   {
+    this.name = 'Btn'
     this.color = '#6D4C41'
     var points = rectPoints(this.x, this.y, this.w, this.h)
     this.lines = []
@@ -424,6 +449,7 @@ class RadioButton extends Drawable
 {
   generate()
   {
+    this.name = 'R'
     this.color = '#1565C0'
     var min = Math.min(this.w, this.h)
     this.w = Math.random()*0.5+0.5
@@ -447,6 +473,7 @@ class TextBlock extends Drawable
 {
   generate()
   {
+    this.name = 'Text'
     this.color = '#6A1B9A'
     this.lines = []
     var points = []
@@ -539,6 +566,7 @@ class Dropdown extends Drawable
 {
   generate() 
   {
+    this.name = 'Drop'
     this.color = '#558B2F'
     this.rnd = () => {
       return Math.random()*0.1 + 0.8
@@ -570,6 +598,7 @@ class Textfield extends Drawable
 {
   generate()
   {
+    this.name = 'Input'
     this.color ='#EF6C00'
     this.lines = []
     var points = rectPoints(this.x, this.y, this.w, this.h)
@@ -598,6 +627,7 @@ class Picture extends Drawable
 {
   generate()
   {
+    this.name = 'Picture'
     this.color = '#D50000'
     this.lines = []
     var points = rectPoints(this.x, this.y, this.w, this.h)
@@ -1046,11 +1076,14 @@ function randomText(chars){
   return res;
 }
 
-function drawText(text, min, max){
+function drawText(text, min, max, font, randomize){
   var height = max[1] - min[1]
   var width =  max[0] - min[0]
 
-  context.font=height+"px Daniel font"
+  randomize = randomize == null ? true : randomize
+
+  font = font || "px Daniel font"
+  context.font=height + font
 
   var textWidth = context.measureText(text).width
   var textHeight = context.measureText(text).height
@@ -1061,21 +1094,30 @@ function drawText(text, min, max){
 
   if(textWidth>width){
 
-    var finalWidth = width*random(0.6,1.0)
+    var finalWidth = width
+
+    if (randomize)
+      finalWidth *= random(0.6,1.0)
+
     leftOver = width - finalWidth
 
     realHeight = height * finalWidth / textWidth
   }
 
   if(textHeight>height){
-      realHeight = height*random(0.6,1.0)
+      realHeight = height
+      if(randomize)
+        realHeight *= random(0.6,1.0)
   }
-  realHeight *=random(0.8,1.0)
+
+  if(randomize)
+    realHeight *=random(0.8,1.0)
+
   leftOverH = height-realHeight
   
-  context.font=realHeight+"px Daniel font"
-  var x = min[0] + leftOver*Math.random()
-  var y = max[1] - leftOverH*Math.random()
+  context.font = realHeight + font
+  var x = min[0] + leftOver * ((randomize)? Math.random() : 0.5)
+  var y = max[1] - leftOverH* ((randomize)? Math.random() : 0.5)
 
   context.fillStyle="#000"
   context.fillText(text, x, y)

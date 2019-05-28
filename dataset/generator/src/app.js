@@ -9,10 +9,10 @@ const fs = require('fs')
 registerFont('./src/sass/fonts/Daniel-Regular.otf', { family: 'Daniel font' })
 const canvas = createCanvas(800, 900)
 
-var dir= "../data/"
+var dir= "../paper/"
 var index = 0
 var text = false
-var numFiles = 12000
+var numFiles = 10
 
 mkdir(dir + "image")
 mkdir(dir + "annotation")
@@ -27,6 +27,7 @@ for(var i = 0; i < numFiles; i++){
   var perFile = elapsedTime/i
   var toFinish = (numFiles - i)*perFile
 
+  //generateMockupPaper(dir, text, index)
   generateMockup(dir, text, index)
   index++
   //text=!text 
@@ -69,18 +70,44 @@ function mkdir(dir){
   }
 }
 
+function generateMockupPaper(dir, text, index){
+  inputName = dir + '/input'    + index + '.png'
+  generatedName   = dir + '/generated'+ index + '.png' 
+  maskName  = dir + '/mask'     + index + '.png'
+  annotatedName   = dir + '/annotation'+ index + '.png' 
+  
+  objs = drawer.generate_image(canvas, rough, text, false, true, true, true)
+  var inputImage = canvas.toBuffer()
+  fs.writeFileSync(inputName, inputImage)
+
+  drawer.regenerate_image(canvas, rough, text, false, false, false, true, objs)
+  var generatedImage = canvas.toBuffer()
+  fs.writeFileSync(generatedName, generatedImage)
+
+  drawer.regenerate_image(canvas, rough, text, true, false, false, true, objs)
+  var maskImage = canvas.toBuffer()
+  fs.writeFileSync(maskName, maskImage)
+  
+  drawer.regenerate_image(canvas, rough, text, false, false, true, true, objs)
+  var annotatedImage = canvas.toBuffer()
+  fs.writeFileSync(annotatedName, annotatedImage)
+
+}
+
+
+
 function generateMockup(dir, text, index){
   normalName = dir + '/image/'    + index + '.png'
   boxesName  = dir + '/mask/'     + index + '.png'
   objsName   = dir + 'annotation/'+ index + '.json' 
   
-  objs = drawer.generate_image(canvas, rough, text, false)
+  objs = drawer.generate_image(canvas, rough, text, false, false, false, false)
   var normalImage = canvas.toBuffer()
   fs.writeFileSync(normalName, normalImage)
 
   fs.writeFileSync(objsName, drawer.generateJSON(objs))
 
-  drawer.regenerate_image(canvas, rough, text, true, objs)
+  drawer.regenerate_image(canvas, rough, text, true, false, false, true, objs)
   var boxesOnly = canvas.toBuffer()
   fs.writeFileSync(boxesName, boxesOnly)
 }
