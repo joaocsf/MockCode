@@ -16,6 +16,7 @@ from .data_loader import DataLoader
 import numpy as np
 import os
 import argparse
+import pickle
 
 WORKING_DIR = os.path.dirname(__file__)
 
@@ -34,6 +35,11 @@ class Pix2Pix():
                     validation_file=self.validation_file,
                     img_res=(self.img_rows, self.img_cols))
 
+    self.output_history=os.path.join(WORKING_DIR, './results/history/')
+    os.makedirs(self.output_history, exist_ok=True)
+    self.history = {}
+    self.history['g_loss'] = []
+    self.history['g_val_loss'] = []
 
     # Calculate output shape of D (PatchGAN)
     patch = int(self.img_rows / 2**4)
@@ -76,7 +82,7 @@ class Pix2Pix():
     self.combined.compile(loss=['mse', 'mae'],
                 loss_weights=[1, 100],
                 optimizer=optimizer)
-    
+
     self.load()
 
   def build_generator(self):
@@ -158,8 +164,13 @@ class Pix2Pix():
     valid = np.ones((batch_size,) + self.disc_patch)
     fake = np.zeros((batch_size,) + self.disc_patch)
 
+    val_valid = np.ones((3,) + self.disc_patch)
+
     for epoch in range(epochs):
       print('\r Epoch %d BatchSize:%d' % (epoch, batch_size), flush=True)
+      lst_g_loss = []
+      lst_g_val_loss = []
+
       for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size)):
 
         # ---------------------
@@ -178,8 +189,15 @@ class Pix2Pix():
         # -----------------
         # Train the generators
         g_loss = self.combined.train_on_batch([imgs_A, imgs_B], [valid, imgs_A])
-
+        lst_g_loss.append(g_loss[0])
         elapsed_time = datetime.datetime.now() - start_time
+
+        # Validation
+        # val_iA, val_iB = self.data_loader.load_data(batch_size=3, is_testing=True)
+        # g_val_loss = self.combined.test_on_batch([val_iA, val_iB], [val_valid, val_iA])
+        # self.history['g_loss'] += [g_loss[0]]
+        # self.history['g_val_loss'] += [np.mean(g_val_loss[0])]
+
         # Plot the progress
         print ("\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f, acc: %3d%%] [G loss: %f] time: %s" % (epoch, epochs,
                                     batch_i, self.data_loader.n_batches,
@@ -191,6 +209,37 @@ class Pix2Pix():
         if batch_i % sample_interval == 0:
           self.store(epoch, batch_i, g_loss[0], 100*d_loss[1])
           self.sample_images(epoch, batch_i)
+
+          self.history['g_loss'] += [np.mean(lst_g_loss)]
+
+          for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size, True)):
+            g_loss = self.combined.test_on_batch([imgs_A, imgs_B], [valid, imgs_A])
+            lst_g_val_loss.append(g_loss[0])
+            print ("\rValidation [Epoch %d/%d] [Batch %d/%d] [G loss: %f] time: %s" % (epoch, epochs,
+                                        batch_i, self.data_loader.n_val_batches,
+                                        g_loss[0],
+                                        elapsed_time), flush=True, end='')
+
+          self.history['g_val_loss'] += [np.mean(lst_g_val_loss)]
+
+          lst_g_loss = []
+          lst_g_val_loss = []
+
+      # for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size, True)):
+      #   g_loss = self.combined.test_on_batch([imgs_A, imgs_B], [valid, imgs_A])
+      #   lst_g_val_loss.append(g_loss[0])
+      #   print ("\rValidation [Epoch %d/%d] [Batch %d/%d] [G loss: %f] time: %s" % (epoch, epochs,
+      #                               batch_i, self.data_loader.n_val_batches,
+      #                               g_loss[0],
+      #                               elapsed_time), flush=True, end='')
+
+
+      # self.history['g_loss'] += [np.mean(lst_g_loss)]
+      # self.history['g_val_loss'] += [np.mean(lst_g_val_loss)]
+    
+
+    self.plot_history()
+    self.store_history()
 
   def sample_images(self, epoch, batch_i):
     os.makedirs('images/sample/', exist_ok=True)
@@ -221,6 +270,19 @@ class Pix2Pix():
     result_image = self.generator.predict(images)
     return result_image[0]
 
+  def plot_history(self):
+    plot_history_charts('Loss', self.history['g_loss'], self.history['g_val_loss'])
+
+  def store_history(self):
+    history_file = os.path.join(self.output_history, 'history.pkl')
+    with open(history_file, 'wb') as f: 
+      pickle.dump(self.history, f)
+
+  def load_history(self):
+    history_file = os.path.join(self.output_history, 'history.pkl')
+    with open(history_file, 'rb') as f: 
+      self.history = pickle.load(f)
+
   def load(self):
     path = os.path.join(self.weights_path, 'combined_weights.h5')
     if not os.path.isfile(path): return
@@ -249,11 +311,22 @@ def arguments():
   parser = argparse.ArgumentParser()
   parser.add_argument('-v', dest='validation')
   parser.add_argument('-t', dest='train')
+  parser.add_argument('-history', dest='history', action='count', default=0)
 
   return parser.parse_args()
 
+def plot_history_charts(title, data, val_data):
+  l1, = plt.plot(data, label='Train')
+  l2, = plt.plot(val_data, label="Validation")
+  plt.ylabel(title)
+  plt.legend(handles=[l1, l2])
+  plt.show()
 
-#if __name__ == '__main__':
-  #args = arguments()
-  #gan = Pix2Pix(args.train, args.validation)
-  #gan.train(epochs=200, batch_size=2, sample_interval=200)
+# if __name__ == '__main__':
+#   args = arguments()
+#   gan = Pix2Pix(args.train, args.validation)
+
+#   if(args.history > 0):
+#     gan.load_history()
+#     gan.plot_history()
+#   gan.train(epochs=10, batch_size=2, sample_interval=25)
