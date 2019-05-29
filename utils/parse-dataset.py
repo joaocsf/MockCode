@@ -228,13 +228,13 @@ def createParser():
     '-s',
     dest='split',
     action='count',
-    help='Split Folder',
+    help='Split To Image-Mask',
   )
   parser.add_argument(
     '-m',
     dest='mask',
     action='count',
-    help='StoreMask?',
+    help='Label Mask Only',
   )
   parser.add_argument(
     '-r',
