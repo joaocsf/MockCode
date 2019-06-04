@@ -20,13 +20,21 @@ import pickle
 
 WORKING_DIR = os.path.dirname(__file__)
 
+DEFAULT_MODEL_PATH = os.path.join(WORKING_DIR, './weights')
+DEFAULT_MODEL_PATH_OUT = os.path.join(WORKING_DIR, './out')
+
 class Pix2Pix():
-  def __init__(self, train_file, validation_file):
+  def __init__(self, train_file, validation_file, weights_path=DEFAULT_MODEL_PATH, out_weights_path=DEFAULT_MODEL_PATH_OUT):
     # Input shape
     self.img_rows = 512
     self.img_cols = 512
     self.channels = 3
-    self.weights_path = os.path.join(WORKING_DIR,'./weights')
+
+    self.weights_path = weights_path
+    self.out_weights_path = out_weights_path
+    os.makedirs(self.weights_path, exist_ok=True)
+    os.makedirs(self.out_weights_path, exist_ok=True)
+
     self.img_shape = (self.img_rows, self.img_cols, self.channels)
     self.train_file = train_file
     self.validation_file = validation_file
@@ -167,6 +175,7 @@ class Pix2Pix():
     val_valid = np.ones((3,) + self.disc_patch)
 
     for epoch in range(epochs):
+      print('')
       print('\r Epoch %d BatchSize:%d' % (epoch, batch_size), flush=True)
       lst_g_loss = []
       lst_g_val_loss = []
@@ -212,6 +221,7 @@ class Pix2Pix():
 
           self.history['g_loss'] += [np.mean(lst_g_loss)]
 
+          print('')
           for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size, True)):
             g_loss = self.combined.test_on_batch([imgs_A, imgs_B], [valid, imgs_A])
             lst_g_val_loss.append(g_loss[0])
@@ -220,6 +230,7 @@ class Pix2Pix():
                                         g_loss[0],
                                         elapsed_time), flush=True, end='')
 
+          print('')
           self.history['g_val_loss'] += [np.mean(lst_g_val_loss)]
 
           lst_g_loss = []
@@ -302,7 +313,7 @@ class Pix2Pix():
     self.store_weights(self.combined, 'combined', epoch, batch, g_loss, acc)
 
   def store_weights(self, model, name, epoch, batch, g_loss, acc):
-    path1 = os.path.join(self.weights_path, '{0}_weights.h5'.format(name))
+    path1 = os.path.join(self.out_weights_path, '{0}_weights.h5'.format(name))
     #path2 = os.path.join(self.weights_path, 'log_ep{3}_{4}_{0}_weights_loss{1}_acc{2}.h5'.format(name, int(g_loss), int(acc), epoch, batch))
     model.save_weights(path1)
     #model.save_weights(path2)
@@ -312,6 +323,8 @@ def arguments():
   parser.add_argument('-v', dest='validation')
   parser.add_argument('-t', dest='train')
   parser.add_argument('-history', dest='history', action='count', default=0)
+  parser.add_argument('-m', dest='model', default=DEFAULT_MODEL_PATH, help="Folder to the weight files")
+  parser.add_argument('-out', dest='out_model', default=DEFAULT_MODEL_PATH_OUT, help="Folder to store the output weight files")
 
   return parser.parse_args()
 
@@ -324,7 +337,7 @@ def plot_history_charts(title, data, val_data):
 
 # if __name__ == '__main__':
 #   args = arguments()
-#   gan = Pix2Pix(args.train, args.validation)
+#   gan = Pix2Pix(args.train, args.validation, args.model, args.out_model)
 
 #   if(args.history > 0):
 #     gan.load_history()
