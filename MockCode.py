@@ -77,6 +77,18 @@ class MockCode:
         cv.setWindowProperty('Image', cv.WND_PROP_FULLSCREEN, cv.WINDOW_NORMAL)
         cv.waitKey(1)
   
+  def test(self, file_path, eval_obj):
+
+    with open(file_path, 'r') as file:
+      for line in file.readlines():
+        eval_obj['current'] = line
+        image = line.split(' ')[0]
+        image = cv.imread(image, cv.IMREAD_COLOR)
+        if(image is None):
+          print('Error Files Missing')
+          return
+        self.__run_pipeline__(image)
+
   def image(self, image_path):
     print(PROCESSING_IMAGE, flush=True)
     image = cv.imread(image_path)
@@ -161,6 +173,17 @@ def arg_parse():
   parser.add_argument('-a', '--alternative')
   parser.add_argument('-dg', '--debuggen')
   parser.add_argument('-c', '--camera', default=0)
+
+  parser.add_argument('--testing', dest='testing')
+  parser.add_argument('--testing-yolo', dest='testing_yolo', action='store_true')
+  parser.add_argument('--testing-p2p', dest='testing_pix2pix', action='store_true')
+  parser.add_argument('--testing-classes', dest='testing_classes', default="./model/classes.txt")
+  parser.add_argument('--testing-p2p-weights', dest='testing_pix2pix_weights')
+  parser.add_argument('--testing-p2p-yolo-weights', dest='testing_pix2pix_yolo_weights')
+  parser.add_argument('--testing-yolo-weights', dest='testing_yolo_weights')
+
+  parser.add_argument('--measure_time', dest='measure_time')
+
   return parser.parse_args()
 
 def nothing(x):
@@ -226,8 +249,28 @@ def setup_debug_gen_pipeline(pipeline, annotation_file):
   html_generator = PipeLine.code_generation.GeneratorHTMLGRIDV2()
   pipeline.add_generator(html_generator)
 
+def test_all(pipeline, add_pix2pix, add_yolo, pix2pix_data, yolo_data, eval_obj, classes_path):
+
+  objs = {}
+
+  if(add_yolo):
+    yolo = PipeLine.detection.DetectorYOLO(
+      model_path=yolo_data['model'])
+    pipeline.add_detection(yolo)
+
+  if(add_pix2pix):
+    pix2pix = PipeLine.detection.DetectorPix2Pix(
+      p2p_weights=pix2pix_data['p2p_weights'],
+      yolo_weights=pix2pix_data['yolo_weights'])
+    pipeline.add_detection(pix2pix)
+
+
+  html_generator = PipeLine.code_generation.GeneratorTest(eval_obj, classes_path)
+  pipeline.add_generator(html_generator)
+
 def main():
   args = arg_parse()
+  eval_obj = {'current': 0}
 
   print(BANNER, flush=True)
   print(SETUP, flush=True)
@@ -236,20 +279,36 @@ def main():
 
   if not args.debuggen is None:
     setup_debug_gen_pipeline(pipeline, args.debuggen)
+
   elif not args.alternative is None:
     setup_cnn_pipeline(pipeline, args.alternative)
+
+  elif not args.testing is None:
+    yolo_data = {
+      "model": args.testing_yolo_weights
+    }
+    p2p_data = { 
+      "p2p_weights": args.testing_pix2pix_weights,
+      "yolo_weights": args.testing_pix2pix_yolo_weights
+    }
+    test_all(pipeline, args.testing_pix2pix, args.testing_yolo, p2p_data, yolo_data, eval_obj, args.testing_classes)
   else:
     setup_dnn_pipeline(pipeline)
-  
+
   mockcode = MockCode(pipeline)
 
-  if args.image == None:
+  if not args.measure_time is None:
+    mockcode.test(args.measure_time, eval_obj)
+
+  elif not args.testing is None:
+    mockcode.test(args.testing, eval_obj)
+
+  elif args.image == None:
     mockcode.video(args.camera)
+
   else:
     mockcode.image(args.image)
 
-  #cv.waitKey(0)
-  #input('...')  
 
 if __name__ == "__main__":
   main()
