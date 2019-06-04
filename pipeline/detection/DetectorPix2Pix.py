@@ -9,14 +9,24 @@ import importlib
 
 WORK_DIR = os.path.dirname(__file__)
 
+DEFAULT_PIX2PIX_WEIGHTS = os.path.join(WORK_DIR, '../../model/pix2pix/out/transfer_learning/')
+DEFAULT_YOLO_MODEL = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/containers_transferlearning.h5')
+DEFAULT_YOLO_CLASSES = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/container_classes.txt')
+
 class DetectorPix2Pix(Detector):
+  def __init__(self, p2p_weights=DEFAULT_PIX2PIX_WEIGHTS, yolo_weights=DEFAULT_YOLO_MODEL):
+    self.default_pix2pix_weights = p2p_weights
+    print(p2p_weights)
+    self.default_yolo_weights = yolo_weights
+    super().__init__()
+
   def on_create(self):
-    self.pix2pix = Pix2Pix(None, None)
+    self.pix2pix = Pix2Pix(None, None, weights_path=self.default_pix2pix_weights)
     yolo = importlib.import_module('model.keras-yolo3.yolo')
 
     yolo_config = {
-        "model_path": os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/container_weights.h5'),
-        "classes_path": os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/container_classes.txt')
+        "model_path": self.default_yolo_weights,
+        "classes_path": DEFAULT_YOLO_CLASSES
       }
     self.YOLO = yolo.YOLO(**yolo_config)
   
@@ -45,7 +55,7 @@ class DetectorPix2Pix(Detector):
   def to_json(self, boxes, fx, fy):
     result = []
     for box in boxes:
-      x,y,mx,my,id,c, _ = box
+      x,y,mx,my,id,c,s = box
       x  *= fx
       y  *= fy
       mx *= fx
@@ -53,10 +63,12 @@ class DetectorPix2Pix(Detector):
       result.append(
         {
           'class': c,
+          'class_id': id,
           'x': x,
           'y': y,
           'w': mx-x,
           'h': my-y,
+          'score': s
         }
       )
     return result
