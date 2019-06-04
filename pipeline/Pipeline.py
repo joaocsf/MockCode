@@ -4,16 +4,25 @@ from .code_generation import Generator
 import os
 import cv2 as cv
 import time
+import pickle
+
+
+WORK_DIR = os.path.dirname(__file__)
+DEFAULT_STATISTICS_DIR = os.path.join(WORK_DIR,'stats/')
 
 class Pipeline():
 
-  def __init__(self, out_folder):
+  def __init__(self, out_folder, statistics=DEFAULT_STATISTICS_DIR):
     self.out_folder =out_folder
+    self.statistics_dir = statistics
+
     self.detectors = []
     self.processors = []
     self.generators = []
     self.detection_results = []
     self.ommit = {}
+
+    os.makedirs(self.statistics_dir, exist_ok=True)
   def add_detection(self, detection):
     assert isinstance(detection, Detector)
     self.detectors.append(detection)
@@ -87,6 +96,31 @@ class Pipeline():
     print('\t{0}: \t{1}\n{2}'.format(label, self.colored_number(total_time), sub_stats_str))
     return total_time
   
+  def statsObject(self, lst, label):
+    obj = {
+      'name': label,
+      'childs': [],
+      'average': 0
+    }
+
+    total_time = 0
+
+    for item in lst:
+      times = item.get_times()
+      times_mean = sum(times)/len(times)
+      name = type(item).__name__
+      total_time += times_mean
+      obj['childs'].append(
+        {
+          'name': name,
+          'times': times,
+          'average': times_mean
+        }
+      )
+    
+    obj['average']=total_time
+    return obj
+  
   def colored_number(self, content):
     return '\033[92m{0:.4f}s\033[0m'.format(content)
 
@@ -99,7 +133,18 @@ class Pipeline():
     total += self.log_substats(self.generators, 'Generation')
 
     print('Total: {0}'.format(self.colored_number(total)), flush=True)
+    self.store_statistics()
 
+  def store_statistics(self):
+    print('Storing Statistics')
+    objs = []
+    objs.append(self.statsObject(self.detectors, 'Detection'))
+    objs.append(self.statsObject(self.processors, 'Processing'))
+    objs.append(self.statsObject(self.generators, 'Generating'))
+
+    store_path = os.path.join(self.statistics_dir, 'stats.pkl')
+    with open(store_path, 'wb') as file:
+      pickle.dump(objs, file)
 
   def execute(self, image):
     res = []
@@ -110,11 +155,12 @@ class Pipeline():
       res = self.execute_detection(image)
     self.debug('Before', image, res)
     print('')
-
+    print(res)
     res = self.execute_processors(res)
     self.debug('After', image, res)
     print('')
 
+    print(res)
     self.execute_code_generators(res)
     print('\nFinished Processing Pipeline')
 
