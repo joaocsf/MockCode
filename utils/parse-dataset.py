@@ -8,6 +8,7 @@ from pprint import pprint
 import multiprocessing.dummy as mp
 
 splitImages = False
+store_everything = False
 mustSplit = False
 datasetDir = ''
 outputDir = ''
@@ -65,7 +66,7 @@ def remove_boxes(img, boxes, classes):
   return img
 
 def processFile(file):
-  global mustSplit, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries, prefix, saveMask
+  global mustSplit, datasetDir, outputDir, relative2Output, classes, totalfiles, currfile, entries, prefix, saveMask, store_everything
 
   currfile+=1
   print_progressbar(currfile/totalfiles, prefix=prefix, suffix=file )
@@ -116,7 +117,9 @@ def processFile(file):
       toImage = os.path.relpath(imagePath, outputDir)
       toImageBoxes = os.path.relpath(imageBoxesPath, outputDir)
 
-    if not saveMask:
+    if not saveMask or store_everything:
+      if store_everything:
+        normalBoxes += containerBoxes
       entries.append(toImage + " " + ' '.join(normalBoxes))
     else:
       entries.append(toImageBoxes + " " + ' '.join(containerBoxes))
@@ -241,6 +244,12 @@ def createParser():
     action='count',
     help="Relative To Output?"
   )
+  parser.add_argument(
+    '-e',
+    dest='everything',
+    action='store_true',
+    help="Store Every Element Found"
+  )
 
   return parser
 
@@ -255,7 +264,7 @@ def read_classes(classfile):
   return classes
 
 def execute():
-  global mustSplit, saveMask
+  global mustSplit, saveMask, store_everything
   parser = createParser()
   args = parser.parse_args()
 
@@ -271,6 +280,7 @@ def execute():
 
   mustSplit = (not args.split is None) and args.split > 0
   saveMask = (not args.mask is None) and args.mask > 0
+  store_everything = args.everything
 
   if len(classes) == 0:
     print('Classes Missing')
