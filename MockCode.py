@@ -89,6 +89,23 @@ class MockCode:
           return
         self.__run_pipeline__(image)
 
+  def interactive(self, folder_path):
+    i = ''
+    files = os.listdir(folder_path)
+    files.sort(key=lambda f: int(''.join(filter(str.isdigit, f) or -1)))
+    while True:
+      try:
+        i = input('Image_ID {0}:'.format(len(files)))
+        if i == 'exit': 
+          return
+        id = int(i)
+        path = os.path.join(folder_path, files[id])
+        print(path)
+        self.image(path)
+      except:
+        print('Wrong Value')
+        i = 'exit'
+
   def image(self, image_path):
     print(PROCESSING_IMAGE, flush=True)
     image = cv.imread(image_path)
@@ -163,7 +180,7 @@ class MockCode:
       return thresh_color
 
     corped = cv.cvtColor(corped, cv.COLOR_GRAY2BGR)
-    # cv.imshow('Corped', corped)
+    #cv.imshow('Corped', corped)
     return thresh_color
 
 def arg_parse():
@@ -173,6 +190,7 @@ def arg_parse():
   parser.add_argument('-a', '--alternative')
   parser.add_argument('-dg', '--debuggen')
   parser.add_argument('-c', '--camera', default=0)
+  parser.add_argument('--interactive')
 
   parser.add_argument('--testing', dest='testing')
   parser.add_argument('--testing-yolo', dest='testing_yolo', action='store_true')
@@ -200,11 +218,16 @@ def setup_dnn_pipeline(pipeline):
   selector = PipeLine.result_processing.ProcessorSelector()
   vLists = PipeLine.result_processing.ProcessorLists('v')
   hLists = PipeLine.result_processing.ProcessorLists('h')
+
+  hierarchy = PipeLine.result_processing.ProcessorHierarchy('h')
+
   pipeline.add_processing(merger)
   pipeline.add_processing(component)
   pipeline.add_processing(selector)
   pipeline.add_processing(vLists)
   pipeline.add_processing(hLists)
+
+  pipeline.add_processing(hierarchy)
 
   html_generator = PipeLine.code_generation.GeneratorHTMLGRIDV2()
   pipeline.add_generator(html_generator)
@@ -239,11 +262,15 @@ def setup_debug_gen_pipeline(pipeline, annotation_file):
   selector = PipeLine.result_processing.ProcessorSelector()
   vLists = PipeLine.result_processing.ProcessorLists('v')
   hLists = PipeLine.result_processing.ProcessorLists('h')
+
+  hierarchy = PipeLine.result_processing.ProcessorHierarchy('h')
+
   pipeline.add_processing(merger)
   pipeline.add_processing(component)
   pipeline.add_processing(selector)
   pipeline.add_processing(vLists)
   pipeline.add_processing(hLists)
+  pipeline.add_processing(hierarchy)
 
   html_generator = PipeLine.code_generation.GeneratorHTMLLists()
   html_generator = PipeLine.code_generation.GeneratorHTMLGRIDV2()
@@ -297,7 +324,10 @@ def main():
 
   mockcode = MockCode(pipeline)
 
-  if not args.measure_time is None:
+  if not args.interactive is None:
+    mockcode.interactive(args.interactive)
+
+  elif not args.measure_time is None:
     mockcode.test(args.measure_time, eval_obj)
 
   elif not args.testing is None:
@@ -308,6 +338,7 @@ def main():
 
   else:
     mockcode.image(args.image)
+    cv.waitKey(0)
 
 
 if __name__ == "__main__":
