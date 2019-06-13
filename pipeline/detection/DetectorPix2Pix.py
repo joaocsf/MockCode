@@ -13,6 +13,11 @@ DEFAULT_PIX2PIX_WEIGHTS = os.path.join(WORK_DIR, '../../model/pix2pix/out/transf
 DEFAULT_YOLO_MODEL = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/containers_transferlearning.h5')
 DEFAULT_YOLO_CLASSES = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/container_classes.txt')
 
+DEFAULT_PIX2PIX_WEIGHTS = os.path.join(WORK_DIR, '../../model/pix2pix/out/only_drawings/')
+DEFAULT_YOLO_MODEL = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/containers_hand_original_weights.h5')
+DEFAULT_YOLO_CLASSES = os.path.join(WORK_DIR, '../../model/keras-yolo3/model_data/container_classes.txt')
+
+
 class DetectorPix2Pix(Detector):
   def __init__(self, p2p_weights=DEFAULT_PIX2PIX_WEIGHTS, yolo_weights=DEFAULT_YOLO_MODEL):
     self.default_pix2pix_weights = p2p_weights
