@@ -71,15 +71,18 @@ class Pipeline():
       pt1 = (int(element['x']), int(element['y']))
       pt2 = (int(element['w'] + pt1[0]), int(element['h'] + pt1[1]))
       color = (0,0,255)
+
       if element['class'] == 'Container':
         color = (255*(1-deep/5.0),255*deep/5.0,0)
         if element.__contains__('childs'):
           self.debug_aux(image, element['childs'], deep+1)
+
       cv.rectangle(image, pt1, pt2, color, 5)
 
   def debug(self,tag, image, elements):
     image2 = image.copy()
     self.debug_aux(image2, elements)
+    cv.namedWindow(tag,cv.WINDOW_NORMAL)
     cv.imshow(tag, image2)
     cv.waitKey(1)
 
@@ -155,12 +158,13 @@ class Pipeline():
       res = self.execute_detection(image)
     self.debug('Before', image, res)
     print('')
-    print(res)
+    #print(res)
     res = self.execute_processors(res)
     self.debug('After', image, res)
+    cv.waitKey(1)
     print('')
 
-    print(res)
+    #print(res)
     self.execute_code_generators(res)
     print('\nFinished Processing Pipeline')
 
