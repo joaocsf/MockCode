@@ -18,6 +18,8 @@ class ProcessorSelector(Processor):
     to_remove=[]
 
     childs = container['childs']
+    childs = sorted(childs, key= lambda x: (x['x']))
+
     for index, child in enumerate(childs):
       if child['class'] == 'Container':
         self.process_container(child)
@@ -38,7 +40,7 @@ class ProcessorSelector(Processor):
         a = childs[selector]
         b = childs[textblock]
         texts = [childs[i] for i in textblocks]
-        if self.next_to_object(a, b) and not self.something_between(a,b, texts):
+        if self.next_to_object(a, b) and not self.something_between(a,b, childs):
           textblocks.remove(textblock)
 
           objs = [a, b]
@@ -100,8 +102,9 @@ class ProcessorSelector(Processor):
     res = v/float(delta)
     if res < 0:
       res = 0
-    elif res > 1:
-      res = 1
+    elif res >= 1:
+      res = 0
+    res = 0
 
     return 1.0 - res
 
@@ -110,8 +113,8 @@ class ProcessorSelector(Processor):
     (a_x,a_y) = (a['x'], a['y'])
     (a_xM, a_yM) = (a['x'] + a_w, a_y + a_h)
 
-    a_x -= a_w * self.m_mult(a_w, 15, 70) * 4
-    a_xM += a_w * self.m_mult(a_w, 15, 70) * 4
+    a_x -= a_w * self.m_mult(a_w, 15, 70) * 8
+    a_xM += a_w * self.m_mult(a_w, 15, 70) * 8
 
     (b_x,b_y) = (b['x'], b['y'])
     (b_w, b_h) = (b['w'], b['h'])

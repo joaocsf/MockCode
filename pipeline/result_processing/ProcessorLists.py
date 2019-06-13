@@ -21,6 +21,11 @@ class ProcessorLists(Processor):
 
     element_type = 'none' if not element.__contains__('type') else element['type']
 
+    if self.orientation == 'v':
+      others = sorted(others, key=lambda obj: (obj['y']))
+    else:
+      others = sorted(others, key=lambda obj: (obj['x']))
+
     for other in others[:]:
       if elements.__contains__(other) or other['class'] != element['class']:
         continue
@@ -143,6 +148,8 @@ class ProcessorLists(Processor):
     (b_w, b_h) = (b['w'], b['h'])
     (b_xM, b_yM) = (b_x + b_w, b_y + b_h)
 
+    f_e = 2.5
+    f_d = 0.25
       #Horizontal
     if self.orientation == 'h':
 
@@ -152,10 +159,10 @@ class ProcessorLists(Processor):
         return False
 
       m = 2.0 #self.get_mult_factor(a_w, 50, 30)
-      a_x -= a_w*m*2.5
-      a_xM += a_w*m*2.5
-      a_y += a_h*0.25
-      a_yM -= a_h*0.25
+      a_x -= a_w*m*f_e
+      a_xM += a_w*m*f_e
+      a_y += a_h*f_d
+      a_yM -= a_h*f_d
       if a_x < 0: 
         a_x = 0
 
@@ -168,10 +175,10 @@ class ProcessorLists(Processor):
         return False
 
       m = 1.0 #self.get_mult_factor(a_h, 50, 30)
-      a_x += a_w*0.25
-      a_xM -= a_w*0.25
-      a_y -= a_h*m*2.5
-      a_yM += a_h*m*2.5
+      a_x += a_w*f_d
+      a_xM -= a_w*f_d
+      a_y -= a_h*m*f_e
+      a_yM += a_h*m*f_e
       if a_y < 0: 
         a_y = 0
 
