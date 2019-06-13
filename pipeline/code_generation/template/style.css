@@ -109,10 +109,12 @@ button, .select-wrapper{
 }
 button{
   height: 50px;
+  min-height: 50px;
 }
 .container.column *,
 .container.row *{
   flex-grow: 1;
+  padding: 5px;
 }
 .container.column{
   display: flex;

@@ -12,7 +12,6 @@ class ProcessorHierarchy(Processor):
     container = root[0]
     self.containerTests = {}
     self.process_container(container, self.orientation)
-    print('\n\n', container)
     return [container]
 
 
@@ -34,7 +33,6 @@ class ProcessorHierarchy(Processor):
     final_orientation = current_orientation
 
     if len(res) == 1:
-      print('\n\n\nFIRST HERE!\n\n\n', flush=True)
       current_orientation = self.get_oposite_direction(current_orientation)
       res = self.process_container_direction(container, current_orientation)
       final_orientation = current_orientation
