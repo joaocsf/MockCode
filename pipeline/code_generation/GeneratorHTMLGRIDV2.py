@@ -28,7 +28,7 @@ class GeneratorHTMLGRIDV2(Generator):
     webbrowser.get('firefox').open(self.out_file)
 
 main_grid_size = (12,12)
-grid_h_div = (8)
+grid_h_div = (12)
 main_grid_subsize = 8
 grid={}
 
@@ -67,13 +67,23 @@ def getSpan(xMin, xMax, Value, span_width):
 def getElementSpanString(obj):
   return 'class="col-md-{0}"'.format(getElementSpan(obj))
 
+def get_flex_size(obj, parent):
+  dimension = 'width: auto'
+  s = int(obj['w']/parent['w'])*grid_h_div
+  if parent['orientation'] == 'v':
+    dimension = 'height: auto'
+    s = int(obj['h']/parent['h'])*grid_h_div
+  
+  return 'flex-grow: {0}; {1};'.format(s, dimension)
+
+
 def getElementSpanGridString(obj):
   parent = containerStack[-1]
   if obj is None:
     return ''
 
   if (parent.__contains__('orientation')):
-    if not parent['orientation'] is None:
+    if not parent['orientation'] is None and not parent['orientation'] == 'grid':
       return ''
   grid = getElementGridPosition(obj)
   return """
@@ -114,7 +124,7 @@ def getElementSpan(obj):
 def wIMG(o):
   global randomID
   randomID+=1
-  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0});'.format(randomID, o['w']*3, o['h']*3), obj=o)
+  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0});'.format(randomID, int(o['w']*3), int(o['h']*3)), obj=o)
 
 def wTF(o):
   return getElement('input', ['placeholder="Inputfield"','type="text"'], obj=o)
@@ -173,8 +183,10 @@ def get_container_components(o):
 def get_container_string(o):
   span = getElementGridPosition(o)
   orientation = '' if not o.__contains__('orientation') else o['orientation']
-  if orientation != '':
-    orientation = 'row' if orientation == 'h' else 'column'
+  if orientation == 'h':
+    orientation = 'row'
+  elif orientation == 'v':
+    orientation = 'column'
 
   components = get_container_components(o)
   dark_theme = 'blue-grey darken-1 dark' if components.__contains__('Component') else ''
