@@ -1,6 +1,6 @@
  #!/bin/bash
  python MockCode.py \
-	--testing ./containers_only_val \
+	--testing ./containers_only_val_image \
 	--testing-p2p \
 		--testing-p2p-weights ./model/pix2pix/weights/ \
 		--testing-p2p-yolo-weights ./model/keras-yolo3/model_data/container_weights.h5 \
