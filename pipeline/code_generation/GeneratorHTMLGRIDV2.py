@@ -25,8 +25,8 @@ class GeneratorHTMLGRIDV2(Generator):
     self.out_file = os.path.join(out_folder, 'index.html')
   
   def show(self):
-    #webbrowser.get('firefox').open(self.out_file)
-    pass
+    webbrowser.get('firefox').open(self.out_file)
+    #pass
 
 main_grid_size = (12,12)
 grid_h_div = (12)
