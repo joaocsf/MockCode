@@ -25,7 +25,8 @@ class GeneratorHTMLGRIDV2(Generator):
     self.out_file = os.path.join(out_folder, 'index.html')
   
   def show(self):
-    webbrowser.get('firefox').open(self.out_file)
+    #webbrowser.get('firefox').open(self.out_file)
+    pass
 
 main_grid_size = (12,12)
 grid_h_div = (12)
@@ -124,7 +125,7 @@ def getElementSpan(obj):
 def wIMG(o):
   global randomID
   randomID+=1
-  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0});'.format(randomID, int(o['w']*3), int(o['h']*3)), obj=o)
+  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0}); min-height:{3}px;'.format(randomID, int(o['w']*2), int(o['h']*2), int(o['h']/2)), obj=o)
 
 def wTF(o):
   return getElement('input', ['placeholder="Inputfield"','type="text"'], obj=o)
