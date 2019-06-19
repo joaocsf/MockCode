@@ -93,12 +93,13 @@ class MockCode:
     i = ''
     files = os.listdir(folder_path)
     files.sort(key=lambda f: int(''.join(filter(str.isdigit, f) or -1)))
+    add1 = int(''.join(filter(str.isdigit,files[0])))
     while True:
       try:
         i = input('Image_ID {0}:'.format(len(files)))
         if i == 'exit': 
           return
-        id = int(i)
+        id = int(i) - add1
         path = os.path.join(folder_path, files[id])
         print(path)
         self.image(path)
