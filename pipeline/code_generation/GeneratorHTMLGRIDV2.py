@@ -25,13 +25,18 @@ class GeneratorHTMLGRIDV2(Generator):
     self.out_file = os.path.join(out_folder, 'index.html')
   
   def show(self):
-    webbrowser.get('firefox').open(self.out_file)
-    #pass
+    #webbrowser.get('firefox').open(self.out_file)
+    pass
 
 main_grid_size = (12,12)
 grid_h_div = (12)
 main_grid_subsize = 8
 grid={}
+
+size_w = 800
+
+canvas_size = (0,0)
+default_canvas_size=(800,900)
 
 Lorem = "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
 
@@ -123,9 +128,18 @@ def getElementSpan(obj):
   #return span
 
 def wIMG(o):
-  global randomID
+  global randomID, canvas_size, default_canvas_size
   randomID+=1
-  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0}); min-height:{3}px;'.format(randomID, int(o['w']*2), int(o['h']*2), int(o['h']/2)), obj=o)
+  
+  xx = o['w']/canvas_size[0]
+  xx = xx * default_canvas_size[0]
+  xx = int(xx)
+
+  yy = o['h']/canvas_size[1]
+  yy = yy * default_canvas_size[1]
+  yy = int(yy)
+
+  return getElement('div', clss='img z-depth-2', style='background-image:url(https://picsum.photos/{1}/{2}?random={0}); min-height:{3}px;'.format(randomID, xx, yy, yy/2), obj=o)
 
 def wTF(o):
   return getElement('input', ['placeholder="Inputfield"','type="text"'], obj=o)
@@ -287,6 +301,7 @@ def parseContainer(objs):
   return content
 
 def generate_code(objects, out_folder, html_file, css_file, js_file):
+  global canvas_size
   objs = objects
   #print(objs)
   maxW = max(objs, key=lambda o: o['x']+o['w'])
@@ -302,6 +317,7 @@ def generate_code(objects, out_folder, html_file, css_file, js_file):
       'grid-size': main_grid_size
     }
   )
+  canvas_size = (objs[0]['w'], objs[0]['h'])
   #snapToGrid(containerStack)
   content = parseContainer(objs)
 

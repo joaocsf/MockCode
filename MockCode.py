@@ -61,7 +61,7 @@ class MockCode:
       _, img = cam.read()
       key = cv.waitKey(1)
       img = self.adapt_image(img)
-      cv.imshow('Image', img)
+      #cv.imshow('Image', img)
       if key == 114:
         print('Restarting Video Stream')
         cam.release()
@@ -69,7 +69,7 @@ class MockCode:
       if key == 27:
         break
       elif key == 32:
-        cv.imshow('ScreenShot', img)
+        #cv.imshow('ScreenShot', img)
         cv.waitKey(1)
         print(Processing)
         self.__run_pipeline__(img)
@@ -125,6 +125,7 @@ class MockCode:
     center, size = tuple(map(int, center)), tuple(map(int, size))
     if angle < -45:
       angle += 90
+      size = (size[1], size[0])
     height, width = img.shape[0], img.shape[1]
 
     M = cv.getRotationMatrix2D(center, angle, 1)
@@ -135,6 +136,9 @@ class MockCode:
     return img_crop, img_rot
 
   def adapt_image(self, img):
+    cv.namedWindow('Image', cv.WINDOW_NORMAL)
+
+    original_img = img
     img = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
     kernel = cv.getTrackbarPos('kernel', 'Image')
     kernel_element = cv.getTrackbarPos('kernel_e', 'Image')
@@ -152,10 +156,11 @@ class MockCode:
     method = cv.ADAPTIVE_THRESH_GAUSSIAN_C if typ == 0 else cv.ADAPTIVE_THRESH_MEAN_C
     thresh = cv.adaptiveThreshold(img, 256, method, cv.THRESH_BINARY, kernel, weight)
     element = cv.getStructuringElement(cv.MORPH_ELLIPSE, (kernel_element, kernel_element))
+    element2 = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
     thresh = cv.morphologyEx(thresh, cv.MORPH_CLOSE, element)
     thresh = cv.morphologyEx(thresh, cv.MORPH_ERODE, element)
 
-    thresh2 = cv.morphologyEx(thresh, cv.MORPH_ERODE, element, iterations=20)
+    thresh2 = cv.morphologyEx(thresh, cv.MORPH_ERODE, element2, iterations=10)
 
     thresh2 = cv.bitwise_not(thresh2)
     _, contours, _ = cv.findContours(thresh2, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
@@ -164,6 +169,7 @@ class MockCode:
 
     thresh_color = cv.cvtColor(thresh, cv.COLOR_GRAY2BGR)
     if len(sizes) == 0: 
+      cv.imshow('Image', original_img)
       return thresh_color
     high = max(sizes, key=lambda c: c[0])[1]
 
@@ -172,17 +178,16 @@ class MockCode:
     box = np.int0(box)
     thresh2 = cv.cvtColor(thresh2, cv.COLOR_GRAY2BGR)
     thresh2 = thresh_color.copy()
-    cv.drawContours(thresh2, [box], 0, (0,255,0), 2)
+    cv.drawContours(original_img, [box], 0, (0,255,0), 2)
 
     corped, rot = self.corp_image(thresh, rect)
-
-    #cv.imshow('Thresh2', thresh2)
+    cv.imshow('Image', original_img)
     if corped is None or np.sum(corped.shape) == 0:
       return thresh_color
 
     corped = cv.cvtColor(corped, cv.COLOR_GRAY2BGR)
-    #cv.imshow('Corped', corped)
-    return thresh_color
+    cv.imshow('Corped', corped)
+    return corped
 
 def arg_parse():
   parser = argparse.ArgumentParser('')

@@ -50,6 +50,7 @@ class DetectorPix2Pix(Detector):
 
     result = self.pix2pix.predict_image(image)
     image = self.result_to_image(result)
+    #image.show('Pix2Pix')
     image_h, image_w = result.shape[:2]
     result = self.YOLO.detect_boxes(image)
 
